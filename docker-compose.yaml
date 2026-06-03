@@ -6,12 +6,10 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yaml"
     ports:
       - "9090:9090"
     volumes:
-      - ./scripts/prometheus.yaml:/etc/prometheus/prometheus.yaml
+      - ./scripts/prometheus.yml:/etc/prometheus/prometheus.yml
 
   grafana:
     image: grafana/grafana:latest
