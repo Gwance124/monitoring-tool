@@ -14,9 +14,9 @@ ram_percent = Gauge(
     "Current RAM usage percentage"
 )
 
-ram_used_gb = Gauge(
-    "custom_ram_used_gb",
-    "Current RAM used in GB"
+ram_used_bytes = Gauge(
+    "custom_ram_used_bytes",
+    "Current RAM used in bytes"
 )
 
 
@@ -25,7 +25,7 @@ def collect_metrics():
 
     cpu_percent.set(psutil.cpu_percent(interval=0.1))
     ram_percent.set(memory.percent)
-    ram_used_gb.set(memory.used / (1024 ** 3))
+    ram_used_bytes.set(memory.used)
 
 
 @app.route("/metrics")
