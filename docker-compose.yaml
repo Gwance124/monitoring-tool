@@ -4,6 +4,11 @@ services:
     ports:
       - "9101:9101"
 
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+
   prometheus:
     image: prom/prometheus:latest
     ports:

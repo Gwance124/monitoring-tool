@@ -6,3 +6,8 @@ scrape_configs:
     static_configs:
       - targets:
           - custom-monitor:9101
+
+  - job_name: node-exporter
+    static_configs:
+      - targets:
+          - node-exporter:9100
