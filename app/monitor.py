@@ -19,6 +19,15 @@ ram_used_bytes = Gauge(
     "Current RAM used in bytes"
 )
 
+ram_total_bytes = Gauge(
+    "custom_ram_total_bytes",
+    "Total RAM in bytes"
+)
+
+ram_available_bytes = Gauge(
+    "custom_ram_available_bytes",
+    "Available RAM in bytes"
+)
 
 def collect_metrics():
     memory = psutil.virtual_memory()
@@ -26,6 +35,8 @@ def collect_metrics():
     cpu_percent.set(psutil.cpu_percent(interval=0.1))
     ram_percent.set(memory.percent)
     ram_used_bytes.set(memory.used)
+    ram_total_bytes.set(memory.total)
+    ram_available_bytes.set(memory.available)
 
 
 @app.route("/metrics")
