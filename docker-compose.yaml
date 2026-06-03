@@ -1,0 +1,19 @@
+services:
+  custom-monitor:
+    build: ./app
+    ports:
+      - "9101:9101"
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./scripts/prometheus.yaml:/etc/prometheus/prometheus.yaml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
