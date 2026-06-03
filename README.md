@@ -2,7 +2,27 @@
 
 Local monitoring prototype using a custom Python Prometheus exporter, Prometheus, and Grafana.
 
-## Current components
+### Running Locally
+
+From the root of the repository:
+
+```bash
+docker compose up --build
+```
+
+This starts:
+
+```text
+custom monitor exporter
+Prometheus
+Grafana
+```
+
+### Stopping Locally
+
+```bash
+docker compose down
+```
 
 ### Custom monitor exporter
 
@@ -33,28 +53,6 @@ When adding Prometheus as a Grafana data source, use this URL:
 
 ```text
 http://prometheus:9090
-```
-
-## Running Locally
-
-From the root of the repository:
-
-```bash
-docker compose up --build
-```
-
-This starts:
-
-```text
-custom monitor exporter
-Prometheus
-Grafana
-```
-
-## Stopping Locally
-
-```bash
-docker compose down
 ```
 
 ## Testing the Exporter
