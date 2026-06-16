@@ -755,14 +755,13 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (server) (System_CXL_Read_Throughput_Bytes_Per_Second{server=~\"$server\", source=\"uncore\"})",
-          "legendFormat": "{{server}} system read",
+          "expr": "(\n  (\n    sum by (server) (rate(CXL_Read_Mem{server=~\"$server\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))\n    +\n    sum by (server) (rate(CXL_Read_Cache{server=~\"$server\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))\n  )\n  or\n  sum by (server) (rate(CXL_Read_Mem{server=~\"$server\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))\n  or\n  sum by (server) (rate(CXL_Read_Cache{server=~\"$server\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))\n  or\n  sum by (server) (System_CXL_Read_Throughput_Bytes_Per_Second{server=~\"$server\", source=\"uncore\"})\n)",
+          "legendFormat": "{{server}} read",
           "refId": "A"
         }
       ],
-      "title": "CXL System Read Throughput (EMR/SPR)",
-      "type": "timeseries",
-      "description": "EMR/SPR fallback metric from pcm-sensor-server. BHS systems usually expose socket-level CXL_Read_Mem and CXL_Read_Cache instead."
+      "title": "CXL Read Throughput",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -826,9 +825,8 @@
           "refId": "B"
         }
       ],
-      "title": "CXL.mem by Socket (BHS and CXL PMU)",
-      "type": "timeseries",
-      "description": "Read series appears on BHS/newer PCM builds that emit CXL_Read_Mem. Write series appears where PCM emits CXL_Write_Mem."
+      "title": "CXL.mem by Socket",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -892,9 +890,8 @@
           "refId": "B"
         }
       ],
-      "title": "CXL.cache by Socket (BHS and CXL PMU)",
-      "type": "timeseries",
-      "description": "Read series appears on BHS/newer PCM builds that emit CXL_Read_Cache. Write series appears where PCM emits CXL_Write_Cache."
+      "title": "CXL.cache by Socket",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -1009,23 +1006,13 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (server, socket) (rate(CXL_Read_Mem{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]) + rate(CXL_Read_Cache{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
-          "legendFormat": "{{server}} socket {{socket}} cxl read total",
+          "expr": "(\n  (\n    sum by (server) (rate(CXL_Write_Mem{server=~\"$server\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))\n    +\n    sum by (server) (rate(CXL_Write_Cache{server=~\"$server\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))\n  )\n  or\n  sum by (server) (rate(CXL_Write_Mem{server=~\"$server\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))\n  or\n  sum by (server) (rate(CXL_Write_Cache{server=~\"$server\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))\n)",
+          "legendFormat": "{{server}} write",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (server, socket) (rate(CXL_Write_Mem{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]) + rate(CXL_Write_Cache{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
-          "legendFormat": "{{server}} socket {{socket}} cxl write total",
-          "refId": "B"
         }
       ],
-      "title": "CXL Total Socket Traffic",
-      "type": "timeseries",
-      "description": "Socket-level CXL read/write totals from mem plus cache. This is expected to be populated on BHS/newer PCM builds with read counters."
+      "title": "CXL Write Throughput",
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -1652,6 +1639,6 @@
   "timezone": "browser",
   "title": "Hardware Fleet Overview",
   "uid": "hardware-fleet-overview",
-  "version": 3,
+  "version": 6,
   "weekStart": ""
 }
