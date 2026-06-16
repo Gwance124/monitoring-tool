@@ -15,6 +15,7 @@
       }
     ]
   },
+  "description": "Single fleet dashboard for GPU, DRAM, CXL, networking, and exporter health across Docker-monitored servers.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -32,7 +33,7 @@
       },
       "id": 1,
       "panels": [],
-      "title": "Fleet Overview",
+      "title": "GPU",
       "type": "row"
     },
     {
@@ -42,79 +43,63 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "DOWN"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "UP"
-                }
-              },
-              "type": "value"
-            }
-          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
-                "color": "green",
-                "value": 1
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 12,
+        "h": 6,
+        "w": 6,
         "x": 0,
         "y": 1
       },
       "id": 2,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
           ],
-          "show": false
+          "fields": "",
+          "values": false
         },
-        "showHeader": true
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "11.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "up{server=~\"$server\", job=~\"$job\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "{{server}} / {{job}} / {{instance}}",
-          "range": false,
+          "expr": "avg by (server, gpu) (DCGM_FI_DEV_GPU_UTIL{server=~\"$server\", gpu=~\"$gpu\"})",
+          "legendFormat": "{{server}} gpu {{gpu}}",
           "refId": "A"
         }
       ],
-      "title": "Exporter Health",
-      "type": "table"
+      "title": "GPU Utilization",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -123,18 +108,6 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -143,35 +116,41 @@
                 "value": null
               },
               {
+                "color": "orange",
+                "value": 70
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 90
               }
             ]
           },
-          "unit": "percentunit"
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 6,
         "w": 6,
-        "x": 12,
+        "x": 6,
         "y": 1
       },
       "id": 3,
       "options": {
-        "legend": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
           "calcs": [
             "lastNotNull"
           ],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "targets": [
         {
@@ -179,15 +158,13 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "1 - avg by (server) (rate(node_cpu_seconds_total{server=~\"$server\", mode=\"idle\"}[$__rate_interval]))",
-          "legendFormat": "{{server}}",
-          "range": true,
+          "expr": "100 * DCGM_FI_DEV_FB_USED{server=~\"$server\", gpu=~\"$gpu\"} / (DCGM_FI_DEV_FB_USED{server=~\"$server\", gpu=~\"$gpu\"} + DCGM_FI_DEV_FB_FREE{server=~\"$server\", gpu=~\"$gpu\"})",
+          "legendFormat": "{{server}} gpu {{gpu}}",
           "refId": "A"
         }
       ],
-      "title": "CPU Busy",
-      "type": "timeseries"
+      "title": "GPU Memory Used",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -196,18 +173,6 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -216,26 +181,153 @@
                 "value": null
               },
               {
+                "color": "orange",
+                "value": 450
+              },
+              {
                 "color": "red",
-                "value": 0.85
+                "value": 650
               }
             ]
           },
-          "unit": "percentunit"
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "DCGM_FI_DEV_POWER_USAGE{server=~\"$server\", gpu=~\"$gpu\"}",
+          "legendFormat": "{{server}} gpu {{gpu}}",
+          "refId": "A"
+        }
+      ],
+      "title": "GPU Power",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "DCGM_FI_DEV_GPU_TEMP{server=~\"$server\", gpu=~\"$gpu\"}",
+          "legendFormat": "{{server}} gpu {{gpu}}",
+          "refId": "A"
+        }
+      ],
+      "title": "GPU Temperature",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 7,
-        "w": 6,
-        "x": 18,
-        "y": 1
+        "w": 8,
+        "x": 0,
+        "y": 7
       },
-      "id": 4,
+      "id": 6,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "list",
           "placement": "bottom",
@@ -252,28 +344,22 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "1 - (node_memory_MemAvailable_bytes{server=~\"$server\"} / node_memory_MemTotal_bytes{server=~\"$server\"})",
-          "legendFormat": "{{server}}",
-          "range": true,
+          "expr": "avg by (server, gpu) (DCGM_FI_DEV_GPU_UTIL{server=~\"$server\", gpu=~\"$gpu\"})",
+          "legendFormat": "{{server}} gpu {{gpu}} util",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * DCGM_FI_PROF_SM_ACTIVE{server=~\"$server\", gpu=~\"$gpu\"}",
+          "legendFormat": "{{server}} gpu {{gpu}} sm active",
+          "refId": "B"
         }
       ],
-      "title": "Memory Used",
+      "title": "GPU Compute Saturation",
       "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 8
-      },
-      "id": 5,
-      "panels": [],
-      "title": "Host",
-      "type": "row"
     },
     {
       "datasource": {
@@ -282,12 +368,74 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 7
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * DCGM_FI_PROF_PIPE_TENSOR_ACTIVE{server=~\"$server\", gpu=~\"$gpu\"}",
+          "legendFormat": "{{server}} gpu {{gpu}} tensor",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * DCGM_FI_PROF_DRAM_ACTIVE{server=~\"$server\", gpu=~\"$gpu\"}",
+          "legendFormat": "{{server}} gpu {{gpu}} hbm dram",
+          "refId": "B"
+        }
+      ],
+      "title": "Tensor and HBM Activity",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 0,
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 5,
@@ -301,14 +449,15 @@
       "gridPos": {
         "h": 7,
         "w": 8,
-        "x": 0,
-        "y": 9
+        "x": 16,
+        "y": 7
       },
-      "id": 6,
+      "id": 8,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "list",
           "placement": "bottom",
@@ -325,10 +474,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "node_load1{server=~\"$server\"}",
-          "legendFormat": "{{server}} load1",
-          "range": true,
+          "expr": "DCGM_FI_DEV_XID_ERRORS{server=~\"$server\", gpu=~\"$gpu\"}",
+          "legendFormat": "{{server}} gpu {{gpu}} xid",
           "refId": "A"
         },
         {
@@ -336,15 +483,212 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "node_load5{server=~\"$server\"}",
-          "hide": false,
-          "legendFormat": "{{server}} load5",
-          "range": true,
+          "expr": "DCGM_FI_DEV_PCIE_REPLAY_COUNTER{server=~\"$server\", gpu=~\"$gpu\"}",
+          "legendFormat": "{{server}} gpu {{gpu}} pcie replay",
           "refId": "B"
         }
       ],
-      "title": "Load Average",
+      "title": "GPU Reliability",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 9,
+      "panels": [],
+      "title": "DRAM and CXL Memory",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 0.9
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 15
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "1 - (node_memory_MemAvailable_bytes{server=~\"$server\"} / node_memory_MemTotal_bytes{server=~\"$server\"})",
+          "legendFormat": "{{server}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Host DRAM Used",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 15
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "node_memory_MemAvailable_bytes{server=~\"$server\"}",
+          "legendFormat": "{{server}} available",
+          "refId": "A"
+        }
+      ],
+      "title": "Host DRAM Available",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server, socket) (rate(DRAM_Reads{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} socket {{socket}} dram read",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server, socket) (rate(DRAM_Writes{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} socket {{socket}} dram write",
+          "refId": "B"
+        }
+      ],
+      "title": "DRAM Bandwidth by Socket",
       "type": "timeseries"
     },
     {
@@ -354,12 +698,74 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 21
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server) (System_CXL_Read_Throughput_Bytes_Per_Second{server=~\"$server\", source=\"uncore\"})",
+          "legendFormat": "{{server}} system read",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server) (System_CXL_Write_Throughput_Bytes_Per_Second{server=~\"$server\", source=\"uncore\"})",
+          "legendFormat": "{{server}} system write",
+          "refId": "B"
+        }
+      ],
+      "title": "CXL System Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 5,
@@ -374,13 +780,14 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 9
+        "y": 21
       },
-      "id": 7,
+      "id": 14,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "list",
           "placement": "bottom",
@@ -397,10 +804,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "sum by (server) (rate(node_network_receive_bytes_total{server=~\"$server\", device!~\"lo|docker.*|br.*|veth.*\"}[$__rate_interval]))",
-          "legendFormat": "{{server}} RX",
-          "range": true,
+          "expr": "sum by (server, socket) (rate(CXL_Read_Mem{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} socket {{socket}} read mem",
           "refId": "A"
         },
         {
@@ -408,10 +813,281 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "sum by (server) (rate(node_network_transmit_bytes_total{server=~\"$server\", device!~\"lo|docker.*|br.*|veth.*\"}[$__rate_interval]))",
-          "legendFormat": "{{server}} TX",
-          "range": true,
+          "expr": "sum by (server, socket) (rate(CXL_Write_Mem{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} socket {{socket}} write mem",
+          "refId": "B"
+        }
+      ],
+      "title": "CXL.mem by Socket",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 21
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server, socket) (rate(CXL_Read_Cache{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} socket {{socket}} read cache",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server, socket) (rate(CXL_Write_Cache{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} socket {{socket}} write cache",
+          "refId": "B"
+        }
+      ],
+      "title": "CXL.cache by Socket",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rate(node_pressure_memory_waiting_seconds_total{server=~\"$server\"}[$__rate_interval])",
+          "legendFormat": "{{server}} memory wait",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rate(node_pressure_io_waiting_seconds_total{server=~\"$server\"}[$__rate_interval])",
+          "legendFormat": "{{server}} io wait",
+          "refId": "B"
+        }
+      ],
+      "title": "Memory and IO Pressure",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server, socket) (rate(CXL_Read_Mem{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]) + rate(CXL_Read_Cache{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} socket {{socket}} cxl read total",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server, socket) (rate(CXL_Write_Mem{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]) + rate(CXL_Write_Cache{server=~\"$server\", socket=~\"$socket\", aggregate=\"system\", source=\"uncore\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} socket {{socket}} cxl write total",
+          "refId": "B"
+        }
+      ],
+      "title": "CXL Total Read and Write",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 18,
+      "panels": [],
+      "title": "Networking",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server) (rate(node_network_receive_bytes_total{server=~\"$server\", device!~\"lo|docker.*|br.*|veth.*\"}[$__rate_interval]) * 8)",
+          "legendFormat": "{{server}} rx",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server) (rate(node_network_transmit_bytes_total{server=~\"$server\", device!~\"lo|docker.*|br.*|veth.*\"}[$__rate_interval]) * 8)",
+          "legendFormat": "{{server}} tx",
           "refId": "B"
         }
       ],
@@ -425,226 +1101,31 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 0,
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
           },
-          "unit": "percentunit"
+          "unit": "pps"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 7,
-        "w": 8,
-        "x": 16,
-        "y": 9
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "1 - (node_filesystem_avail_bytes{server=~\"$server\", fstype!~\"tmpfs|overlay|squashfs|proc|sysfs|devtmpfs\"} / node_filesystem_size_bytes{server=~\"$server\", fstype!~\"tmpfs|overlay|squashfs|proc|sysfs|devtmpfs\"})",
-          "legendFormat": "{{server}} {{mountpoint}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Filesystem Used",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 16
-      },
-      "id": 9,
-      "panels": [],
-      "title": "GPU",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 0,
-        "y": 17
-      },
-      "id": 10,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "avg by (server, gpu) (DCGM_FI_DEV_GPU_UTIL{server=~\"$server\", gpu=~\"$gpu\"})",
-          "legendFormat": "{{server}} GPU {{gpu}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "GPU Utilization",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 6,
-        "y": 17
-      },
-      "id": 11,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "DCGM_FI_DEV_FB_USED{server=~\"$server\", gpu=~\"$gpu\"} / (DCGM_FI_DEV_FB_USED{server=~\"$server\", gpu=~\"$gpu\"} + DCGM_FI_DEV_FB_FREE{server=~\"$server\", gpu=~\"$gpu\"})",
-          "legendFormat": "{{server}} GPU {{gpu}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "GPU Memory Used",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "unit": "watt"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
+        "w": 12,
         "x": 12,
-        "y": 17
+        "y": 36
       },
-      "id": 12,
+      "id": 20,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "list",
           "placement": "bottom",
@@ -661,14 +1142,21 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "DCGM_FI_DEV_POWER_USAGE{server=~\"$server\", gpu=~\"$gpu\"}",
-          "legendFormat": "{{server}} GPU {{gpu}}",
-          "range": true,
+          "expr": "sum by (server) (rate(node_network_receive_errs_total{server=~\"$server\", device!~\"lo|docker.*|br.*|veth.*\"}[$__rate_interval]) + rate(node_network_transmit_errs_total{server=~\"$server\", device!~\"lo|docker.*|br.*|veth.*\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} errors",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server) (rate(node_network_receive_drop_total{server=~\"$server\", device!~\"lo|docker.*|br.*|veth.*\"}[$__rate_interval]) + rate(node_network_transmit_drop_total{server=~\"$server\", device!~\"lo|docker.*|br.*|veth.*\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} drops",
+          "refId": "B"
         }
       ],
-      "title": "GPU Power",
+      "title": "Network Errors and Drops",
       "type": "timeseries"
     },
     {
@@ -678,33 +1166,31 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
           "custom": {
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 12,
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false
           },
-          "unit": "celsius"
+          "unit": "bps"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 7,
-        "w": 6,
-        "x": 18,
-        "y": 17
+        "w": 12,
+        "x": 0,
+        "y": 43
       },
-      "id": 13,
+      "id": 21,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "list",
           "placement": "bottom",
@@ -721,28 +1207,22 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "DCGM_FI_DEV_GPU_TEMP{server=~\"$server\", gpu=~\"$gpu\"}",
-          "legendFormat": "{{server}} GPU {{gpu}}",
-          "range": true,
+          "expr": "sum by (server) (rate(node_infiniband_port_data_received_bytes_total{server=~\"$server\"}[$__rate_interval]) * 8)",
+          "legendFormat": "{{server}} ib rx",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server) (rate(node_infiniband_port_data_transmitted_bytes_total{server=~\"$server\"}[$__rate_interval]) * 8)",
+          "legendFormat": "{{server}} ib tx",
+          "refId": "B"
         }
       ],
-      "title": "GPU Temperature",
+      "title": "InfiniBand Throughput",
       "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 24
-      },
-      "id": 14,
-      "panels": [],
-      "title": "Reliability and PCM",
-      "type": "row"
     },
     {
       "datasource": {
@@ -751,22 +1231,14 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
           },
           "unit": "short"
         },
@@ -774,15 +1246,16 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 8,
-        "x": 0,
-        "y": 25
+        "w": 12,
+        "x": 12,
+        "y": 43
       },
-      "id": 15,
+      "id": 22,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "list",
           "placement": "bottom",
@@ -799,75 +1272,35 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "DCGM_FI_DEV_XID_ERRORS{server=~\"$server\", gpu=~\"$gpu\"}",
-          "legendFormat": "{{server}} GPU {{gpu}}",
-          "range": true,
+          "expr": "rate(node_netstat_Tcp_RetransSegs{server=~\"$server\"}[$__rate_interval])",
+          "legendFormat": "{{server}} tcp retrans",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "node_netstat_Tcp_CurrEstab{server=~\"$server\"}",
+          "legendFormat": "{{server}} tcp established",
+          "refId": "B"
         }
       ],
-      "title": "GPU XID Errors",
+      "title": "TCP Health",
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
+      "collapsed": false,
       "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 8,
-        "y": 25
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 50
       },
-      "id": 16,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "scrape_duration_seconds{server=~\"$server\", job=~\"$job\"}",
-          "legendFormat": "{{server}} {{job}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Scrape Duration",
-      "type": "timeseries"
+      "id": 23,
+      "panels": [],
+      "title": "Host and Exporter Health",
+      "type": "row"
     },
     {
       "datasource": {
@@ -913,45 +1346,161 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 16,
-        "y": 25
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 51
       },
-      "id": 17,
+      "id": 24,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
           "fields": "",
-          "values": false
+          "reducer": [
+            "sum"
+          ],
+          "show": false
         },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        "showHeader": true
       },
-      "pluginVersion": "11.0.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "editorMode": "code",
-          "expr": "up{server=~\"$server\", job=\"pcm-exporter\"}",
-          "instant": false,
-          "legendFormat": "{{server}}",
-          "range": true,
+          "expr": "up{server=~\"$server\", job=~\"$job\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{server}} {{job}} {{instance}}",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "PCM Exporter Health",
-      "type": "stat"
+      "title": "Exporter Health",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 51
+      },
+      "id": 25,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "1 - avg by (server) (rate(node_cpu_seconds_total{server=~\"$server\", mode=\"idle\"}[$__rate_interval]))",
+          "legendFormat": "{{server}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Busy",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 51
+      },
+      "id": 26,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server) (rate(node_disk_read_bytes_total{server=~\"$server\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} read",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (server) (rate(node_disk_written_bytes_total{server=~\"$server\"}[$__rate_interval]))",
+          "legendFormat": "{{server}} write",
+          "refId": "B"
+        }
+      ],
+      "title": "Disk Throughput",
+      "type": "timeseries"
     }
   ],
   "refresh": "10s",
@@ -959,6 +1508,7 @@
   "tags": [
     "hardware",
     "gpu",
+    "cxl",
     "docker"
   ],
   "templating": {
@@ -974,16 +1524,16 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(up, server)",
+        "definition": "query_result(max by (server) (max_over_time(up[10m])))",
         "hide": 0,
         "includeAll": true,
         "label": "Server",
         "multi": true,
         "name": "server",
         "options": [],
-        "query": "label_values(up, server)",
+        "query": "query_result(max by (server) (max_over_time(up[10m])))",
         "refresh": 1,
-        "regex": "",
+        "regex": "/server=\"([^\"]+)\"/",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
@@ -999,16 +1549,16 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(up, job)",
+        "definition": "query_result(max by (job) (max_over_time(up{server=~\"$server\"}[10m])))",
         "hide": 0,
         "includeAll": true,
-        "label": "Job",
+        "label": "Exporter",
         "multi": true,
         "name": "job",
         "options": [],
-        "query": "label_values(up, job)",
+        "query": "query_result(max by (job) (max_over_time(up{server=~\"$server\"}[10m])))",
         "refresh": 1,
-        "regex": "",
+        "regex": "/job=\"([^\"]+)\"/",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
@@ -1024,16 +1574,41 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(DCGM_FI_DEV_GPU_UTIL, gpu)",
+        "definition": "query_result(max by (gpu) (max_over_time(DCGM_FI_DEV_GPU_UTIL{server=~\"$server\"}[10m])))",
         "hide": 0,
         "includeAll": true,
         "label": "GPU",
         "multi": true,
         "name": "gpu",
         "options": [],
-        "query": "label_values(DCGM_FI_DEV_GPU_UTIL, gpu)",
+        "query": "query_result(max by (gpu) (max_over_time(DCGM_FI_DEV_GPU_UTIL{server=~\"$server\"}[10m])))",
         "refresh": 1,
-        "regex": "",
+        "regex": "/gpu=\"([^\"]+)\"/",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "query_result(max by (socket) (max_over_time(CXL_Write_Mem{server=~\"$server\"}[10m]) or max_over_time(CXL_Read_Mem{server=~\"$server\"}[10m]) or max_over_time(CXL_Write_Cache{server=~\"$server\"}[10m]) or max_over_time(CXL_Read_Cache{server=~\"$server\"}[10m])))",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Socket",
+        "multi": true,
+        "name": "socket",
+        "options": [],
+        "query": "query_result(max by (socket) (max_over_time(CXL_Write_Mem{server=~\"$server\"}[10m]) or max_over_time(CXL_Read_Mem{server=~\"$server\"}[10m]) or max_over_time(CXL_Write_Cache{server=~\"$server\"}[10m]) or max_over_time(CXL_Read_Cache{server=~\"$server\"}[10m])))",
+        "refresh": 1,
+        "regex": "/socket=\"([^\"]+)\"/",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
@@ -1048,6 +1623,6 @@
   "timezone": "browser",
   "title": "Hardware Fleet Overview",
   "uid": "hardware-fleet-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
