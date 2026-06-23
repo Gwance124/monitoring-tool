@@ -1,0 +1,60 @@
+services:
+  node-exporter:
+    image: ${NODE_EXPORTER_IMAGE:-prom/node-exporter:latest}
+    container_name: node-exporter
+    profiles:
+      - node
+    ports:
+      - "${NODE_EXPORTER_PORT:-9100}:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+    restart: unless-stopped
+
+  dcgm-exporter:
+    image: ${DCGM_EXPORTER_IMAGE:-nvcr.io/nvidia/k8s/dcgm-exporter:latest}
+    container_name: dcgm-exporter
+    profiles:
+      - gpu
+    ports:
+      - "${DCGM_EXPORTER_PORT:-9400}:9400"
+    cap_add:
+      - SYS_ADMIN
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+    restart: unless-stopped
+
+  pcm-exporter:
+    image: ${PCM_EXPORTER_IMAGE:-ghcr.io/intel/pcm:latest}
+    container_name: pcm-exporter
+    profiles:
+      - pcm
+    platform: ${PCM_PLATFORM:-linux/amd64}
+    environment:
+      - PCM_IGNORE_ARCH_PERFMON=${PCM_IGNORE_ARCH_PERFMON:-0}
+      - PCM_NO_PERF=${PCM_NO_PERF:-0}
+    ports:
+      - "${PCM_EXPORTER_PORT:-9738}:9738"
+    volumes:
+      - /sys/firmware/acpi/tables/MCFG:/pcm/sys/firmware/acpi/tables/MCFG:ro
+      - /proc/bus/pci:/pcm/proc/bus/pci:ro
+      - /proc/sys/kernel/nmi_watchdog:/pcm/proc/sys/kernel/nmi_watchdog:ro
+      - /sys:/sys:rw
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RAWIO
+    devices:
+      - /dev/cpu
+      - /dev/mem
+    restart: unless-stopped
