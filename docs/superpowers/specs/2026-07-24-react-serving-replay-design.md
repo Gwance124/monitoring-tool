@@ -154,18 +154,43 @@ during development and will not first fail on experiment day.
 
 ### Fixture derivation
 
-The fixture is generated from a **real idle snapshot** of
-`http://192.168.3.4:8000/metrics`, captured before any experiments run. An
-idle endpoint still emits every `# HELP`/`# TYPE` line and every histogram
-bucket boundary, so the snapshot supplies the authentic metric names and `le`
-buckets for the deployed vLLM version. Synthetic values are then layered onto
-that real structure.
+The fixture is generated from a **real snapshot** of a live vLLM endpoint,
+captured 2026-07-24. The snapshot supplies authentic metric names, `le` bucket
+boundaries, label sets, and — because the endpoint had already served 3,140
+requests — a real latency distribution to model synthetic values on.
 
-This matters because metric names vary across vLLM versions — the V1 engine
-renamed several — and because a job named `vllm-exporter` could denote either
-vLLM's native endpoint or a third-party sidecar with entirely different names.
+Observed reference distribution (`openai/gpt-oss-20b`):
+
+```
+count = 3140      sum = 4476.2 s
+mean  = 1.426 s
+p50  ~= 1.19 s    p95 ~= 3.69 s
+```
+
 Deriving the fixture from the live endpoint removes the risk of building the
-parser against names the deployment does not have.
+parser against names or shapes the deployment does not have. Metric names vary
+across vLLM versions, and a job named `vllm-exporter` could denote either
+vLLM's native endpoint or a third-party sidecar.
+
+#### Label sets differ between the two sources
+
+The raw endpoint emits only `engine` and `model_name`:
+
+```
+vllm:time_to_first_token_seconds_bucket{engine="0",
+    model_name="openai/gpt-oss-20b", le="2.5"} 2851.0
+```
+
+`server` is **not** present. Prometheus attaches it at scrape time from
+`file_sd`, so it exists in the TSDB but never in a direct `curl`.
+
+The fixture generator therefore **synthesizes the `server` label** onto the
+snapshot. Both adapters then emit identical label sets, `--target` is exercised
+by the fixture path, and the multi-instance abort is testable before experiment
+day rather than after.
+
+`engine="0"` indicates a single engine. `sum by (le)` aggregates across engines,
+so data-parallel deployments exposing `engine="1"` remain correct.
 
 ### Confirmed metric names
 
@@ -178,6 +203,14 @@ Charted metrics. `$TARGET` is the value of `--target`, matched against the
 `server` label (see "Target selection is mandatory" below):
 
 ```promql
+# exact mean -- no bucketing, no interpolation
+rate(vllm:time_to_first_token_seconds_sum{server="$TARGET"}[30s])
+  / rate(vllm:time_to_first_token_seconds_count{server="$TARGET"}[30s])
+
+rate(vllm:e2e_request_latency_seconds_sum{server="$TARGET"}[30s])
+  / rate(vllm:e2e_request_latency_seconds_count{server="$TARGET"}[30s])
+
+# p95 -- tail behaviour, bucket-quantized (see below)
 histogram_quantile(0.95, sum by (le) (rate(
   vllm:time_to_first_token_seconds_bucket{server="$TARGET"}[30s])))
 
@@ -186,6 +219,42 @@ histogram_quantile(0.95, sum by (le) (rate(
 
 vllm:time_to_first_token_seconds_count{server="$TARGET"}   # anchor detection
 ```
+
+#### Why the headline uses the mean, not p95
+
+vLLM's default TTFT histogram boundaries are coarse in the range where this
+deployment's p95 falls:
+
+```
+... 1.0, 2.5, 5.0, 7.5, 10.0, 20.0, 40.0, 80.0 ...
+```
+
+Measured p95 is ~3.69 s, inside the `(2.5, 5.0]` bucket — **2.5 seconds wide**,
+holding only 278 of 3,140 requests. `histogram_quantile` estimates within that
+bucket by assuming the requests are distributed uniformly across it. Latency
+distributions are front-loaded, so that assumption biases the estimate upward.
+
+A 15% TTFT improvement is roughly 0.55 s, which is well inside one bucket
+width. Measuring it as the difference between two interpolated estimates in the
+same coarse bucket makes the result depend on how counts happen to redistribute
+rather than on the true latency change. If one system's p95 crosses into
+`(1.0, 2.5]` while another stays in `(2.5, 5.0]`, the two estimates carry
+different error characteristics and are not directly comparable.
+
+Nothing about this looks broken: the p95 line still moves continuously and the
+chart renders normally. It is simply not trustworthy at the precision the
+headline claim requires — the same failure mode as an unfiltered target
+selector.
+
+`rate(_sum) / rate(_count)` yields the **exact** mean over the window, free of
+bucketing and interpolation. A 15% improvement in mean TTFT measures as 15%.
+
+The two metrics are complementary and both are charted: the mean is precise but
+hides tail behaviour, p95 captures the tail but is quantized here. **The
+headline improvement figure is computed from the mean.**
+
+vLLM does not expose histogram boundaries as a configuration flag, so
+increasing bucket resolution is not an available alternative.
 
 Supporting metrics — captured to CSV, not charted:
 
@@ -196,13 +265,13 @@ Supporting metrics — captured to CSV, not charted:
 | `vllm:external_prefix_cache_hits_total` / `_queries_total` | KV-connector hit rate — the path LMCache, Mooncake, and MARS plug into |
 | `vllm:prompt_tokens_recomputed_total` / `_cached_total` | Recompute volume vs cache reuse; defines the `recompute` baseline |
 
-These cost four extra columns and nothing at experiment time, whereas
-recovering them later would require re-running all four experiments on GPU
-hardware. They exist so the result can be defended: p95 TTFT alone conflates
-queue time with prefill time, and a reviewer may reasonably ask whether MARS's
-advantage is genuine KV reuse or lower queue occupancy under that load.
+These cost extra columns and nothing at experiment time, whereas recovering
+them later would require re-running all four experiments on GPU hardware. They
+exist so the result can be defended: TTFT alone conflates queue time with
+prefill time, and a reviewer may reasonably ask whether MARS's advantage is
+genuine KV reuse or lower queue occupancy under that load.
 
-The headline claim remains p95 TTFT versus recompute. The supporting metrics
+The headline claim is **mean TTFT versus recompute**. The supporting metrics
 are evidence, not chart content.
 
 ### Target selection is mandatory
@@ -251,13 +320,14 @@ profiling runs remain possible sources of a false anchor.
 
 `runs/<system>/<run-id>.csv`:
 
-Charted columns first, supporting columns after:
+Charted columns first, supporting columns after. Example values are drawn
+from the observed reference distribution rather than invented:
 
 ```
-timestamp,elapsed_seconds,system,ttft_p95_seconds,e2e_p95_seconds,requests_completed,queue_p95_seconds,prefill_p95_seconds,ext_cache_hit_ratio,prompt_tokens_recomputed
-1784912400,-60,mars,21.87,50.07,1043,3.10,18.60,0.71,140233
-1784912401,-59,mars,21.77,49.95,1049,3.08,18.54,0.71,140698
-1784912460,0,mars,20.14,47.30,2287,2.94,17.11,0.74,171904
+timestamp,elapsed_seconds,system,ttft_mean_seconds,e2e_mean_seconds,ttft_p95_seconds,e2e_p95_seconds,requests_completed,queue_p95_seconds,prefill_p95_seconds,ext_cache_hit_ratio,prompt_tokens_recomputed
+1784912400,-60,mars,1.43,4.02,3.69,9.85,1043,0.31,1.06,0.71,140233
+1784912401,-59,mars,1.42,4.00,3.66,9.81,1049,0.31,1.05,0.71,140698
+1784912460,0,mars,1.28,3.71,3.30,9.12,2287,0.27,0.98,0.74,171904
 ```
 
 `ext_cache_hit_ratio` is derived at extraction time as
@@ -279,12 +349,15 @@ to overwrite an existing run without `--force`.
 
 ## Video
 
-- **Charts:** two stacked scrolling line panels — p95 TTFT and p95 end-to-end
-  latency. Fixed 60-second trailing x-window, always full, scrolling left.
-  Four lines per panel; MARS drawn at heavier weight.
+- **Charts:** two stacked scrolling line panels — TTFT and end-to-end latency.
+  Each panel draws the mean as a solid line and p95 as a lighter dashed line of
+  the same colour, so tail behaviour is visible without competing with the
+  headline metric. Fixed 60-second trailing x-window, always full, scrolling
+  left. Four systems per panel; MARS drawn at heavier weight.
 - **Right rail:**
-  - Headline: MARS improvement in p95 TTFT versus **recompute** as the fixed
-    naive baseline.
+  - Headline: MARS improvement in **mean** TTFT versus **recompute** as the
+    fixed naive baseline. The mean is used because it is exact; see "Why the
+    headline uses the mean, not p95".
   - Subline: MARS improvement versus the current second-best system, with that
     system named.
   - Horizontal bar groups showing current TTFT and current E2E per system, with
@@ -348,6 +421,13 @@ video path.
 - Fixture to CSV golden-file comparison.
 - `ext_cache_hit_ratio` is empty, not `0.0`, when external cache queries are
   zero — the case that distinguishes an absent KV store from a failing one.
+- Mean derivation: `rate(_sum)/rate(_count)` against a hand-computed expectation
+  from the reference snapshot (`4476.2 / 3140 = 1.426 s`).
+- p95 interpolation against the same snapshot's buckets, asserting ~3.69 s, so a
+  future vLLM bucket-boundary change surfaces as a test failure rather than a
+  quietly shifted benchmark result.
+- Fixture emits the synthesized `server` label, and `--target` filtering plus the
+  multi-instance abort are exercised on the fixture path.
 - Render smoke test: produce a 10-second clip, assert the output exists and has
   the expected frame count.
 
