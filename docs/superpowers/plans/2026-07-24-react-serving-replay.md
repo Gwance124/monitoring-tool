@@ -479,10 +479,11 @@ def test_p50_matches_the_reference_snapshot():
 
 def test_interpolates_linearly_within_a_bucket():
     # 100 observations total; 50 at or below 1.0, all 100 at or below 3.0.
-    # p75 -> 75th observation -> a quarter into the (1.0, 3.0] bucket.
+    # p75 -> rank 75, which is 25 observations into a bucket holding 50,
+    # so halfway across (1.0, 3.0] -> 1.0 + 0.5 * 2.0 = 2.0.
     pairs = [(1.0, 50), (3.0, 100), (math.inf, 100)]
     got = histogram_quantile(0.75, buckets_from(pairs), at=110, window=10)
-    assert abs(got - 1.5) < 1e-9
+    assert abs(got - 2.0) < 1e-9
 
 
 def test_first_bucket_interpolates_from_zero():
