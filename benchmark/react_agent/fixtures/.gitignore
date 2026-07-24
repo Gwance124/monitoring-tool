@@ -1,0 +1,14 @@
+# Generated scrapes, one directory per system, one .prom file per second.
+#
+# These are deterministic under --seed, so they are regenerated rather than
+# stored. Committing them cost 16MB across 2076 files, which every clone would
+# carry forever for data that one command reproduces exactly:
+#
+#     cd benchmark/react_agent && python3 -m fixtures.generate --out fixtures
+#
+# See README.md for what the generated data contains and why.
+mars/
+lmcache/
+mooncake/
+recompute/
+__pycache__/
