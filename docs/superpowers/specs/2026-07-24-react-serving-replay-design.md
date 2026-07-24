@@ -142,7 +142,7 @@ extract_run.py --system mars --source fixture \
 # real capture, after experiments run
 extract_run.py --system mars --source prometheus \
     --prometheus-url http://solab-p7:9090 \
-    --model <model-id> \
+    --target 192.168.3.4:8000 \
     --start 2026-08-01T10:00:00-07:00 --duration 900 --interval 1
 ```
 
@@ -173,16 +173,17 @@ runs the **vLLM V1 engine** — evidenced by `vllm:kv_cache_usage_perc` (V0 name
 it `gpu_cache_usage_perc`), `vllm:prefix_cache_queries_total`, and
 `vllm:engine_sleep_state`.
 
-Charted metrics:
+Charted metrics, where `<selector>` pins the run to one vLLM host (see
+"Target selection is mandatory" below):
 
 ```promql
-histogram_quantile(0.95,
-  sum by (le) (rate(vllm:time_to_first_token_seconds_bucket[30s])))
+histogram_quantile(0.95, sum by (le) (rate(
+  vllm:time_to_first_token_seconds_bucket{<selector>}[30s])))
 
-histogram_quantile(0.95,
-  sum by (le) (rate(vllm:e2e_request_latency_seconds_bucket[30s])))
+histogram_quantile(0.95, sum by (le) (rate(
+  vllm:e2e_request_latency_seconds_bucket{<selector>}[30s])))
 
-vllm:time_to_first_token_seconds_count   # anchor detection
+vllm:time_to_first_token_seconds_count{<selector>}   # anchor detection
 ```
 
 Supporting metrics — captured to CSV, not charted:
@@ -203,8 +204,30 @@ advantage is genuine KV reuse or lower queue occupancy under that load.
 The headline claim remains p95 TTFT versus recompute. The supporting metrics
 are evidence, not chart content.
 
-`--model` applies a label filter so a shared Prometheus serving multiple models
-can be disambiguated.
+### Target selection is mandatory
+
+p7 scrapes **multiple vLLM hosts** through `file_sd/remote/vllm-exporter.yml`,
+each target carrying its own label. Every query must therefore be pinned to
+exactly one serving host.
+
+This is not a convenience. `sum by (le) (rate(...))` over an unfiltered
+selector aggregates histogram buckets across every scraped vLLM instance and
+returns a p95 that describes no real server. The query succeeds, the chart
+renders, and the number is meaningless — a silent wrong answer rather than an
+error.
+
+`extract_run.py` therefore:
+
+- requires a target selector (`--target`), and
+- **fails loudly** if the search window contains samples from more than one
+  vLLM instance after the selector is applied, listing the instances found.
+
+The manifest records the resolved selector so every CSV states which physical
+host produced it.
+
+`--model` is a second, independent filter on `model_name`, needed only when one
+host serves more than one model in the window. It is optional; `--target` is
+not.
 
 Health and readiness probes hit the ASGI layer (`http_requests_total`) without
 entering the engine, so they do not increment `vllm:` request metrics. The
