@@ -106,3 +106,49 @@ def histogram_quantile(
         lower_count = cumulative
 
     return max(finite_bounds)
+
+
+def find_anchor(count_series: list[Sample], sustain: int = 10) -> int | None:
+    """Timestamp of the first served token of a sustained workload.
+
+    Anchoring on observed request activity rather than wall-clock start makes
+    per-system startup delay cancel out: ``elapsed = 0`` denotes the same
+    physical event in every run.
+
+    A candidate qualifies when the counter rises at that timestamp and is
+    strictly higher ``sustain`` seconds later. ``sustain`` is a duration so the
+    guard keeps its meaning when the scrape interval changes; it rejects
+    readiness probes and warm-up bursts, which rise briefly and stop.
+    """
+    ordered = sorted(count_series, key=lambda s: s.timestamp)
+    if len(ordered) < 2:
+        return None
+
+    for index in range(1, len(ordered)):
+        previous, current = ordered[index - 1], ordered[index]
+        if current.value <= previous.value:
+            continue
+
+        # The rise begins between ``previous`` and ``current``, so the last
+        # instant the counter was still flat -- ``previous.timestamp`` -- is
+        # the event being anchored to.
+        anchor_ts = previous.timestamp
+        deadline = anchor_ts + sustain
+        window = [s for s in ordered if anchor_ts <= s.timestamp <= deadline]
+        if not window or window[-1].timestamp < deadline:
+            # Not enough data yet to confirm sustain; a closer rise cannot
+            # be confirmed either, so guessing would misalign the run.
+            return None
+
+        # "Keeps rising" tolerates a single flat step (a scrape landing
+        # between completions) but not a stall -- a burst that rises briefly
+        # and then plateaus, like a readiness probe, must be rejected.
+        flat_steps = sum(
+            1
+            for prev_s, next_s in zip(window, window[1:])
+            if next_s.value <= prev_s.value
+        )
+        if flat_steps <= 1:
+            return anchor_ts
+
+    return None
