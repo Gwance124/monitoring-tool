@@ -56,3 +56,38 @@ def test_mean_rate_matches_the_reference_snapshot():
     counts = counter([0.0, 3140.0])
     got = mean_rate(sums, counts, at=101, window=1)
     assert abs(got - 1.4256) < 0.001
+
+
+def test_rate_divides_by_the_observed_span_not_the_nominal_window():
+    # window=10 at=110 -> window covers [100, 110], but samples only exist
+    # at 102 and 108: an observed span of 6s, not the full 10s window.
+    series = [
+        Sample(timestamp=102, metric="c", labels={}, value=10.0),
+        Sample(timestamp=108, metric="c", labels={}, value=22.0),
+    ]
+    # Increase of 12.0 over the observed 6s span -> 2.0/s.
+    # Dividing by the nominal 10s window instead would give 1.2/s; asserting
+    # 2.0 here is what distinguishes observed-span division from that
+    # rejected alternative.
+    assert rate(series, at=110, window=10) == 2.0
+
+
+def test_mean_rate_is_none_when_the_sum_series_is_too_short():
+    sums = counter([5.0], start=100)  # only one sample -> rate(sums) is None
+    counts = counter([0.0, 4.0, 8.0], start=100)
+    assert mean_rate(sums, counts, at=102, window=2) is None
+
+
+def test_mean_rate_is_none_when_the_count_series_is_too_short():
+    sums = counter([0.0, 10.0, 20.0], start=100)
+    counts = counter([9.0], start=100)  # only one sample -> rate(counts) is None
+    assert mean_rate(sums, counts, at=102, window=2) is None
+
+
+def test_rate_returns_none_for_duplicate_timestamps():
+    # Two samples sharing a timestamp inside the window -> span is zero.
+    series = [
+        Sample(timestamp=105, metric="c", labels={}, value=1.0),
+        Sample(timestamp=105, metric="c", labels={}, value=2.0),
+    ]
+    assert rate(series, at=110, window=10) is None

@@ -28,6 +28,11 @@ def rate(series: list[Sample], at: int, window: int) -> float | None:
         else:
             total += current.value
 
+    # Divide by the observed span between samples, not the nominal window.
+    # If a scrape gap means only part of the window has samples, dividing by
+    # the nominal window would understate the rate by inventing quiet time
+    # that was never measured. Dividing by what was actually observed keeps
+    # gaps as gaps instead of fabricating values.
     span = inside[-1].timestamp - inside[0].timestamp
     if span <= 0:
         return None
