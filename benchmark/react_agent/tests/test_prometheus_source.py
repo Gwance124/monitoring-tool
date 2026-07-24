@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 import sources
@@ -94,3 +96,36 @@ def test_raises_on_prometheus_error_status(monkeypatch):
     monkeypatch.setattr(sources.requests, "get", fake_get)
     with pytest.raises(PrometheusError, match="parse error"):
         PrometheusSource("http://p7:9090", target="solab-x3").fetch(1000, 1001)
+
+
+@pytest.mark.parametrize("target", ["", None])
+def test_rejects_an_empty_target(target):
+    with pytest.raises(ValueError, match="--target"):
+        PrometheusSource("http://p7:9090", target=target)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"target": 'solab"x3'},
+        {"target": "solab{x3"},
+        {"target": "solab}x3"},
+        {"target": "solab-x3", "model": 'openai/gpt"oss'},
+    ],
+)
+def test_rejects_a_target_that_would_break_the_selector(kwargs):
+    with pytest.raises(ValueError):
+        PrometheusSource("http://p7:9090", **kwargs)
+
+
+def test_drops_non_finite_values_from_query_range(monkeypatch):
+    payload = matrix(
+        {"__name__": "vllm:time_to_first_token_seconds_count", "server": "solab-x3"},
+        [[1000, "NaN"], [1001, "9"]],
+    )
+    install_fake_get(monkeypatch, lambda q: payload)
+    got = PrometheusSource("http://p7:9090", target="solab-x3").fetch(1000, 1001)
+    counts = [s for s in got if s.metric == "vllm:time_to_first_token_seconds_count"]
+    assert counts
+    assert all(math.isfinite(s.value) for s in got)
+    assert [s.value for s in counts] == [9.0]

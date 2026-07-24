@@ -120,6 +120,8 @@ class PrometheusSource:
     path and this path run identical math.
     """
 
+    _UNSAFE_SELECTOR_CHARS = ('"', "\\", "{", "}")
+
     def __init__(
         self,
         base_url: str,
@@ -127,10 +129,31 @@ class PrometheusSource:
         model: str | None = None,
         timeout: int = 30,
     ) -> None:
+        if not target:
+            raise ValueError(
+                "A target host is required to pin every query to one vLLM "
+                "instance; pass it with --target. An empty target builds a "
+                "selector that matches no host and returns an empty result "
+                "set -- indistinguishable from a successful empty window."
+            )
+        self._check_selector_safe("target", target)
+        if model:
+            self._check_selector_safe("model", model)
         self.base_url = base_url.rstrip("/")
         self.target = target
         self.model = model
         self.timeout = timeout
+
+    @classmethod
+    def _check_selector_safe(cls, field: str, value: str) -> None:
+        for char in cls._UNSAFE_SELECTOR_CHARS:
+            if char in value:
+                raise ValueError(
+                    f"{field}={value!r} contains {char!r}, which would break "
+                    "out of the PromQL label selector it is interpolated "
+                    "into. A legitimate hostname or model id does not "
+                    "contain this character."
+                )
 
     def _selector(self) -> str:
         parts = [f'server="{self.target}"']
@@ -139,6 +162,17 @@ class PrometheusSource:
         return "{" + ",".join(parts) + "}"
 
     def fetch(self, start: int, end: int, step: int = 1) -> list[Sample]:
+        """Fetch raw samples for every metric in ``RAW_METRICS`` over ``[start, end]``.
+
+        Raises:
+            PrometheusError: for a Prometheus-level problem -- a query that
+                returned a non-"success" status, or a window that resolves to
+                more than one serving host.
+            requests.exceptions.RequestException: transport and HTTP failures
+                (timeouts, connection errors, non-2xx responses via
+                ``raise_for_status``) propagate unchanged from ``requests``;
+                they are not wrapped as ``PrometheusError``.
+        """
         selector = self._selector()
         collected: list[Sample] = []
         seen_servers: set[str] = set()
