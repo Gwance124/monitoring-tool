@@ -686,10 +686,19 @@ def find_anchor(count_series: list[Sample], sustain: int = 10) -> int | None:
     per-system startup delay cancel out: ``elapsed = 0`` denotes the same
     physical event in every run.
 
-    A candidate qualifies when the counter rises at that timestamp and is
-    strictly higher ``sustain`` seconds later. ``sustain`` is a duration so the
-    guard keeps its meaning when the scrape interval changes; it rejects
-    readiness probes and warm-up bursts, which rise briefly and stop.
+    The counter rises somewhere between two scrapes, so the anchor is the last
+    instant it was still known flat: ``previous.timestamp``.
+
+    A candidate qualifies when the workload does not stall during the following
+    ``sustain`` seconds -- that is, when the longest contiguous span of time over
+    which the counter fails to increase is at most ``sustain / 2``. Both the
+    window and the stall threshold are durations, so the guard means the same
+    thing at any scrape interval. It rejects readiness probes and warm-up bursts,
+    which rise briefly and then plateau for the rest of the window.
+
+    Limitation: if the workload genuinely stalls for more than half the window --
+    very low request rates, or long gaps between agent turns -- the anchor cannot
+    be confirmed and the operator should raise ``--anchor-sustain``.
     """
     ordered = sorted(count_series, key=lambda s: s.timestamp)
     if len(ordered) < 2:
@@ -700,18 +709,47 @@ def find_anchor(count_series: list[Sample], sustain: int = 10) -> int | None:
         if current.value <= previous.value:
             continue
 
-        deadline = current.timestamp + sustain
-        later = [s for s in ordered if s.timestamp >= deadline]
-        if not later:
+        anchor_ts = previous.timestamp
+        deadline = anchor_ts + sustain
+        window = [s for s in ordered if anchor_ts <= s.timestamp <= deadline]
+        if not window or window[-1].timestamp < deadline:
             return None
-        if later[0].value > current.value:
-            return current.timestamp
+
+        longest_stall = 0
+        stall = 0
+        for earlier, later in zip(window, window[1:]):
+            if later.value > earlier.value:
+                stall = 0
+            else:
+                stall += later.timestamp - earlier.timestamp
+                longest_stall = max(longest_stall, stall)
+
+        if longest_stall <= sustain / 2:
+            return anchor_ts
 
     return None
 ```
 
-The `return None` when `later` is empty is deliberate: a rise too close to the end
-of the search window cannot be confirmed, and guessing would misalign the run.
+The `return None` when the window does not reach the deadline is deliberate: a
+rise too close to the end of the search window cannot be confirmed, and guessing
+would misalign the run. Returning immediately rather than continuing to scan is
+sound because `anchor_ts` only increases across candidates while the last
+available timestamp is fixed, so no later candidate could be confirmed either.
+
+Two rules that look reasonable and are wrong, both caught during implementation:
+
+- *Anchor on `current.timestamp`.* Off by one scrape against the tests above,
+  which pin the last known-flat instant.
+- *Tolerate at most one non-increasing step.* This counts samples, so it
+  silently tightens as the scrape interval drops -- the same defect this task
+  exists to avoid for `sustain` itself. At a 1s scrape with agent requests
+  completing every 3s, a genuine run shows seven flat steps per window and the
+  function returns `None` for every candidate.
+
+A third, *require progress in both halves of the window*, passes the first five
+tests and still fails: in `test_returns_none_when_the_rise_never_sustains` the
+candidate at t=1002 draws its second-half progress from the next burst entirely,
+bridging a stall it was supposed to detect.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
