@@ -85,3 +85,37 @@ def test_duration_is_the_shortest_common_range(tmp_path: Path):
     write_csv(tmp_path, "mooncake", [(e, 3.0) for e in range(-60, 200)])
     replay = Replay.load(tmp_path)
     assert replay.duration == 199
+
+
+def write_csv_with_header(runs_dir: Path, system: str, columns):
+    directory = runs_dir / system
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / "run.csv"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns)
+        writer.writeheader()
+        row = {c: "" for c in columns}
+        if "elapsed_seconds" in columns:
+            row["elapsed_seconds"] = 0
+        writer.writerow(row)
+    return path
+
+
+def test_load_rejects_a_csv_missing_required_columns(tmp_path: Path):
+    four_systems(tmp_path)
+    truncated_path = write_csv_with_header(
+        tmp_path, "mars", ["timestamp", "system", "ttft_mean_seconds"]
+    )
+    with pytest.raises(ValueError, match="mars") as excinfo:
+        Replay.load(tmp_path)
+    assert "elapsed_seconds" in str(excinfo.value)
+
+
+def test_load_error_names_the_offending_file(tmp_path: Path):
+    four_systems(tmp_path)
+    truncated_path = write_csv_with_header(
+        tmp_path, "mars", ["timestamp", "system", "ttft_mean_seconds"]
+    )
+    with pytest.raises(ValueError) as excinfo:
+        Replay.load(tmp_path)
+    assert str(truncated_path) in str(excinfo.value)

@@ -11,6 +11,12 @@ from dataclasses import dataclass
 
 SYSTEMS = ("mars", "lmcache", "mooncake", "recompute")
 
+# The non-metric columns Replay.load treats specially: elapsed_seconds is read
+# directly to index each row, and all three are excluded from the metric dict.
+# Sourced here once so the required-column check below and the exclusion
+# filter in load() can't drift apart from each other.
+REQUIRED_COLUMNS = ("timestamp", "elapsed_seconds", "system")
+
 LABELS = {
     "mars": "MARS",
     "lmcache": "LMCache",
@@ -58,12 +64,19 @@ class Replay:
             path = pathlib.Path(candidates[-1])
             rows: dict[int, dict] = {}
             with path.open(encoding="utf-8", newline="") as handle:
-                for row in csv.DictReader(handle):
+                reader = csv.DictReader(handle)
+                missing = [c for c in REQUIRED_COLUMNS if c not in (reader.fieldnames or [])]
+                if missing:
+                    raise ValueError(
+                        f"run CSV for system '{system}' at {path} is missing "
+                        f"required column(s): {', '.join(missing)}"
+                    )
+                for row in reader:
                     elapsed = int(row["elapsed_seconds"])
                     rows[elapsed] = {
                         key: (None if value == "" else float(value))
                         for key, value in row.items()
-                        if key not in ("timestamp", "elapsed_seconds", "system")
+                        if key not in REQUIRED_COLUMNS
                     }
             series[system] = rows
 
@@ -81,6 +94,9 @@ class Replay:
         self, system: str, metric: str, at: int, width: int
     ) -> tuple[list[float], list[float | None]]:
         """Trailing ``width`` seconds ending at ``at``. Gaps stay ``None``."""
+        # Assumes the extractor's guarantee of one row per second: an elapsed
+        # second with no row at all is skipped here rather than emitted as
+        # (elapsed, None).
         rows = self.series[system]
         xs, ys = [], []
         for elapsed in range(int(at) - width, int(at) + 1):
@@ -111,6 +127,7 @@ class Replay:
     def second_best(
         self, exclude: str, metric: str, at: int, smooth: int = 30
     ) -> str | None:
+        """Exact ties are broken alphabetically by system name (deterministic)."""
         ranked = []
         for system in SYSTEMS:
             if system == exclude:
