@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "data_classification": "illustrative_demo",
+  "system": "mars",
+  "run_id": "20260724T170000Z",
+  "captured_start_unix": 1784912400,
+  "captured_end_unix": 1784912700,
+  "duration_seconds": 300,
+  "step_seconds": 1,
+  "sample_count": 301,
+  "csv": "20260724T170000Z.csv"
+}
