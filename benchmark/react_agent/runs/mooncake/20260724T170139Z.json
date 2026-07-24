@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "system": "mooncake",
+  "run_id": "20260724T170139Z",
+  "server": "solab-x3",
+  "model": null,
+  "source": "fixture",
+  "data_classification": "fixture",
+  "search_window": [
+    1784912400,
+    1784912919
+  ],
+  "anchor_unix": 1784912499,
+  "benchmark_zero_unix": 1784912559,
+  "warmup_seconds": 60,
+  "benchmark_duration_seconds": 300,
+  "interval_seconds": 1,
+  "anchor_sustain_seconds": 10,
+  "rate_window_seconds": 30,
+  "sample_count": 361,
+  "truncated": false
+}
