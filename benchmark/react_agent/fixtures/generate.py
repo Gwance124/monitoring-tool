@@ -21,6 +21,15 @@ BUCKETS = (
 
 MODEL = "openai/gpt-oss-20b"
 
+# The two extra histograms below piggyback on the same bucket boundaries as
+# TTFT/e2e (see the module docstring: boundaries come from one live capture).
+FAMILIES = (
+    "time_to_first_token_seconds",
+    "e2e_request_latency_seconds",
+    "request_queue_time_seconds",
+    "request_prefill_time_seconds",
+)
+
 # mean TTFT (seconds), mean e2e (seconds), external cache hit ratio
 SYSTEMS = {
     "mars":      (0.86, 2.71, 0.82),
@@ -28,6 +37,16 @@ SYSTEMS = {
     "mooncake":  (1.27, 3.55, 0.58),
     "recompute": (1.71, 4.42, 0.00),
 }
+
+# Queue delay is small and rises only slightly under load; scaling it off the
+# TTFT base keeps its per-system ordering (mars best .. recompute worst)
+# identical to TTFT's, so queue never makes MARS look worse than the others.
+QUEUE_FRACTION = 0.02
+
+# Prefill time is part of what TTFT measures, so generating it as a fraction
+# of that same request's TTFT observation guarantees prefill can never exceed
+# TTFT for the same request -- and therefore not at the aggregate p95 either.
+PREFILL_FRACTION_RANGE = (0.30, 0.60)
 
 PROBE_AT = 20        # seconds after start: health-check burst
 LOAD_AT = 100        # seconds after start: real workload begins
@@ -42,13 +61,29 @@ def _ttft_for(second: int, base: float, rng: random.Random) -> float:
     return max(0.02, base * warm * rng.uniform(0.72, 1.34))
 
 
+def _queue_for(second: int, base: float, rng: random.Random) -> float:
+    """Per-request queue delay: small, near zero, rising slightly under load."""
+    elapsed = second - LOAD_AT
+    warm = 1.0 + 0.5 * max(0.0, 1.0 - elapsed / WARMUP)
+    return max(0.001, base * warm * rng.uniform(0.4, 1.6))
+
+
+def _accumulate(bucket: dict, observation: float) -> None:
+    """Fold one observation into a histogram bucket accumulator in place."""
+    bucket["count"] += 1
+    bucket["sum"] += observation
+    for bound in BUCKETS:
+        if observation <= bound:
+            bucket[bound] += 1
+
+
 def _render(counters: dict, buckets: dict) -> str:
     lines = [
         "# HELP vllm:time_to_first_token_seconds Histogram of time to first token in seconds.",
         "# TYPE vllm:time_to_first_token_seconds histogram",
     ]
     labels = f'engine="0",model_name="{MODEL}"'
-    for family in ("time_to_first_token_seconds", "e2e_request_latency_seconds"):
+    for family in FAMILIES:
         for bound in BUCKETS:
             count = buckets[family][bound]
             lines.append(
@@ -66,11 +101,12 @@ def _render(counters: dict, buckets: dict) -> str:
 def synthesize(system: str, seconds: int, seed: int) -> dict[int, str]:
     """Relative second -> exposition text. Deterministic for a given seed."""
     base_ttft, base_e2e, hit_ratio = SYSTEMS[system]
+    queue_base = base_ttft * QUEUE_FRACTION
     rng = random.Random(f"{system}:{seed}")
 
     families = {
         family: {"count": 0, "sum": 0.0, **{bound: 0 for bound in BUCKETS}}
-        for family in ("time_to_first_token_seconds", "e2e_request_latency_seconds")
+        for family in FAMILIES
     }
     queries = hits = recomputed = successes = 0
     scrapes: dict[int, str] = {}
@@ -84,17 +120,17 @@ def synthesize(system: str, seconds: int, seed: int) -> dict[int, str]:
             arrivals = rng.randint(9, 15)
 
         for _ in range(arrivals):
-            for family, base in (
-                ("time_to_first_token_seconds", base_ttft),
-                ("e2e_request_latency_seconds", base_e2e),
-            ):
-                observation = _ttft_for(second, base, rng)
-                bucket = families[family]
-                bucket["count"] += 1
-                bucket["sum"] += observation
-                for bound in BUCKETS:
-                    if observation <= bound:
-                        bucket[bound] += 1
+            ttft_observation = _ttft_for(second, base_ttft, rng)
+            e2e_observation = _ttft_for(second, base_e2e, rng)
+            queue_observation = _queue_for(second, queue_base, rng)
+            # Derived from this same request's TTFT observation so it is
+            # structurally impossible for prefill to exceed TTFT.
+            prefill_observation = ttft_observation * rng.uniform(*PREFILL_FRACTION_RANGE)
+
+            _accumulate(families["time_to_first_token_seconds"], ttft_observation)
+            _accumulate(families["e2e_request_latency_seconds"], e2e_observation)
+            _accumulate(families["request_queue_time_seconds"], queue_observation)
+            _accumulate(families["request_prefill_time_seconds"], prefill_observation)
             successes += 1
             recomputed += rng.randint(40, 120) if hit_ratio == 0 else rng.randint(4, 30)
             if hit_ratio > 0:

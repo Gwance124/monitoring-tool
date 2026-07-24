@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from fixtures.generate import SYSTEMS, synthesize, write_fixture
-from metrics import find_anchor, mean_rate
+from metrics import find_anchor, histogram_quantile, mean_rate
 from samples import select
 from sources import FixtureSource
 
@@ -61,6 +61,40 @@ def test_recompute_has_no_external_cache_queries(tmp_path: Path):
     got = FixtureSource(tmp_path, server="solab-x3").fetch(1000, 1400)
     queries = select(got, "vllm:external_prefix_cache_queries_total")
     assert all(sample.value == 0.0 for sample in queries)
+
+
+def test_queue_and_prefill_histograms_are_emitted(tmp_path: Path):
+    write_fixture("mars", tmp_path, start=1000, seconds=400, seed=1)
+    got = FixtureSource(tmp_path, server="solab-x3").fetch(1000, 1400)
+    for family in ("request_queue_time_seconds", "request_prefill_time_seconds"):
+        inf_buckets = select(got, f"vllm:{family}_bucket", le="+Inf")
+        counts = select(got, f"vllm:{family}_count")
+        assert inf_buckets, f"no +Inf bucket emitted for {family}"
+        assert counts, f"no _count emitted for {family}"
+        # the +Inf bucket accumulates every observation, so it must match the
+        # metric's own _count at every timestamp that has both.
+        counts_by_ts = {s.timestamp: s.value for s in counts}
+        for sample in inf_buckets:
+            if sample.timestamp in counts_by_ts:
+                assert sample.value == counts_by_ts[sample.timestamp]
+
+
+def test_prefill_p95_never_exceeds_ttft_p95(tmp_path: Path):
+    from extract_run import _buckets
+
+    write_fixture("mars", tmp_path, start=1000, seconds=400, seed=1)
+    got = FixtureSource(tmp_path, server="solab-x3").fetch(1000, 1400)
+    ttft_buckets = _buckets(got, "vllm:time_to_first_token_seconds_bucket", "solab-x3")
+    prefill_buckets = _buckets(got, "vllm:request_prefill_time_seconds_bucket", "solab-x3")
+    checked = 0
+    for at in range(1100, 1400, 10):
+        ttft_p95 = histogram_quantile(0.95, ttft_buckets, at, window=30)
+        prefill_p95 = histogram_quantile(0.95, prefill_buckets, at, window=30)
+        if ttft_p95 is None or prefill_p95 is None:
+            continue
+        checked += 1
+        assert prefill_p95 <= ttft_p95, f"prefill p95 {prefill_p95} exceeded ttft p95 {ttft_p95} at {at}"
+    assert checked, "no overlapping window had both quantiles defined"
 
 
 def test_regenerating_removes_stale_scrapes(tmp_path: Path):

@@ -15,6 +15,14 @@ excludes. The output is deterministic under `--seed`, so storing it would put
 Structure (metric names, label sets, histogram bucket boundaries) comes from a
 live capture of `openai/gpt-oss-20b` taken 2026-07-24. Values are synthetic.
 
+Four histograms are emitted per system: `vllm:time_to_first_token_seconds`,
+`vllm:e2e_request_latency_seconds`, `vllm:request_queue_time_seconds`, and
+`vllm:request_prefill_time_seconds`, all sharing the same bucket boundaries.
+Queue delay is generated small and near zero, rising slightly under load.
+Prefill time is generated as a fraction (30-60%) of that same request's TTFT
+observation, so prefill can never exceed TTFT for the same request or at the
+aggregate p95 -- prefill is physically part of what TTFT measures.
+
 Deliberate shapes, each covering a failure this pipeline must survive:
 
 | Shape | At | Guards against |

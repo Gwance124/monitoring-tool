@@ -163,7 +163,7 @@ def main() -> None:
     parser.add_argument("--target", required=True, help="value of the vLLM server label, e.g. solab-x3")
     parser.add_argument("--fixture", type=pathlib.Path, help="fixture directory (--source fixture)")
     parser.add_argument("--prometheus-url", help="e.g. http://solab-p7:9090 (--source prometheus)")
-    parser.add_argument("--model", help="optional model_name filter")
+    parser.add_argument("--model", help="optional model_name filter (--source prometheus)")
     parser.add_argument("--start", help="ISO-8601 search window start (--source prometheus)")
     parser.add_argument("--duration", type=int, default=900, help="search window length in seconds")
     parser.add_argument("--interval", type=int, default=1)
@@ -233,6 +233,11 @@ def main() -> None:
         "sample_count": len(rows),
         "truncated": truncated,
     }
+    if args.source == "fixture":
+        # FixtureSource has no model parameter and never filters by it, so
+        # recording --model here would read as an applied filter that never
+        # happened. Omit the field entirely rather than risk that misread.
+        del manifest["model"]
     if truncated:
         print("WARNING: run ends before the requested benchmark duration; manifest marks it truncated")
     print(write_run(rows, manifest, args.runs_dir, args.system, run_id, args.force))

@@ -1,10 +1,11 @@
 import csv
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
-from extract_run import CSV_COLUMNS, build_rows, write_run
+from extract_run import CSV_COLUMNS, build_rows, main, write_run
 from fixtures.generate import write_fixture
 from metrics import find_anchor
 from samples import select
@@ -100,3 +101,41 @@ def test_missing_anchor_raises(tmp_path: Path):
     with pytest.raises(ValueError, match="anchor"):
         build_rows([], anchor=None, interval=1, duration=300, warmup=60,
                    server="solab-x3", system="mars")
+
+
+def test_queue_and_prefill_p95_are_populated(tmp_path: Path):
+    rows = rows_for("mars", tmp_path)
+    queue = [r["queue_p95_seconds"] for r in rows if r["queue_p95_seconds"] is not None]
+    prefill = [r["prefill_p95_seconds"] for r in rows if r["prefill_p95_seconds"] is not None]
+    assert queue, "no queue p95 computed"
+    assert prefill, "no prefill p95 computed"
+    assert all(isinstance(v, (int, float)) and v > 0 for v in queue)
+    assert all(isinstance(v, (int, float)) and v > 0 for v in prefill)
+
+
+def test_fixture_manifest_does_not_claim_an_applied_model_filter(tmp_path: Path, monkeypatch):
+    system = "mars"
+    fixture_dir = tmp_path / "fixture"
+    write_fixture(system, fixture_dir, start=START, seconds=400, seed=1)
+    runs_dir = tmp_path / "runs"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "extract_run.py",
+            "--system", system,
+            "--source", "fixture",
+            "--target", "solab-x3",
+            "--fixture", str(fixture_dir),
+            "--model", "openai/gpt-oss-20b",
+            "--benchmark-duration", "50",
+            "--warmup", "60",
+            "--runs-dir", str(runs_dir),
+            "--run-id", "r1",
+        ],
+    )
+    main()
+    manifest = json.loads((runs_dir / system / "r1.json").read_text(encoding="utf-8"))
+    # FixtureSource never filters by model, so a "model" field would read as
+    # an applied filter that never happened.
+    assert "model" not in manifest
