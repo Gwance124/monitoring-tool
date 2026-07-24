@@ -115,10 +115,29 @@ def find_anchor(count_series: list[Sample], sustain: int = 10) -> int | None:
     per-system startup delay cancel out: ``elapsed = 0`` denotes the same
     physical event in every run.
 
-    A candidate qualifies when the counter rises at that timestamp and is
-    strictly higher ``sustain`` seconds later. ``sustain`` is a duration so the
-    guard keeps its meaning when the scrape interval changes; it rejects
-    readiness probes and warm-up bursts, which rise briefly and stop.
+    A candidate qualifies when the counter rises at that timestamp and never
+    stalls for long inside the sustain window: the longest contiguous span of
+    time over which the counter did not increase must not exceed
+    ``sustain / 2``. What separates a workload that kept going from one that
+    rose and stopped is not where the progress happened but how long progress
+    paused.
+
+    The span is measured in seconds between samples, not in samples, so the
+    rule is independent of the scrape interval -- at a fast interval a normal
+    gap between completions spans many flat scrapes, and counting those
+    scrapes would mistake ordinary cadence for a stall. The threshold derives
+    from ``sustain`` itself rather than from sample spacing or a fitted
+    constant, so it means the same thing at every configuration.
+
+    ``sustain`` is a duration for the same reason; it rejects readiness probes
+    and warm-up bursts, which rise briefly and stop, and it cannot be fooled
+    by a later burst, because the quiet gap before that burst is itself a long
+    flat span.
+
+    The honest limitation: if the workload stalls for more than half the
+    sustain window -- very low request rates, or long gaps between agent turns
+    -- the anchor cannot be confirmed and the operator should raise
+    ``--anchor-sustain``.
     """
     ordered = sorted(count_series, key=lambda s: s.timestamp)
     if len(ordered) < 2:
@@ -140,15 +159,19 @@ def find_anchor(count_series: list[Sample], sustain: int = 10) -> int | None:
             # be confirmed either, so guessing would misalign the run.
             return None
 
-        # "Keeps rising" tolerates a single flat step (a scrape landing
-        # between completions) but not a stall -- a burst that rises briefly
-        # and then plateaus, like a readiness probe, must be rejected.
-        flat_steps = sum(
-            1
-            for prev_s, next_s in zip(window, window[1:])
-            if next_s.value <= prev_s.value
-        )
-        if flat_steps <= 1:
+        # Longest contiguous stretch of seconds with no increase. A step that
+        # does not increase extends the current stall by the time it spans; a
+        # step that does increase ends the stall.
+        longest_stall = 0
+        current_stall = 0
+        for prev_s, next_s in zip(window, window[1:]):
+            if next_s.value > prev_s.value:
+                current_stall = 0
+            else:
+                current_stall += next_s.timestamp - prev_s.timestamp
+                longest_stall = max(longest_stall, current_stall)
+
+        if longest_stall <= sustain / 2:
             return anchor_ts
 
     return None

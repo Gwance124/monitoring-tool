@@ -49,3 +49,20 @@ def test_sustain_window_is_measured_in_seconds_not_samples():
         for i, v in enumerate([0, 0, 1, 5, 9, 14, 20])
     ]
     assert find_anchor(coarse, sustain=10) == 1005
+
+
+def test_sparse_completions_still_anchor():
+    # 1s scrape interval, but requests only complete every 3rd second (a
+    # realistic cadence for multi-step agent turns at low concurrency).
+    # Flat for 4s, then the counter ticks up every third second, sustained
+    # well past the window. The old rule -- "at most one flat step in the
+    # sustain window" -- counted flat *samples*, not elapsed time; a 10s
+    # window here has seven flat steps (0,0,0,1,1,1,2,2,2,3,3) and the old
+    # rule returned None even though the workload obviously sustained.
+    values = [0] * 4
+    counter = 0
+    for i in range(30):
+        if i % 3 == 0:
+            counter += 1
+        values.append(counter)
+    assert find_anchor(series(values), sustain=10) == 1003
