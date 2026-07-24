@@ -56,3 +56,53 @@ def mean_rate(
     if sum_rate is None or count_rate is None or count_rate == 0:
         return None
     return sum_rate / count_rate
+
+
+def histogram_quantile(
+    q: float,
+    bucket_series: dict[float, list[Sample]],
+    at: int,
+    window: int,
+) -> float | None:
+    """Quantile estimate from cumulative histogram buckets, as PromQL computes it.
+
+    ``bucket_series`` maps an ``le`` upper bound to that bucket's counter
+    samples; use ``math.inf`` for the ``+Inf`` bucket. The estimate assumes
+    observations are distributed uniformly inside the containing bucket, so its
+    accuracy is bounded by that bucket's width.
+
+    Returns ``None`` when nothing was observed in the window.
+    """
+    rates: list[tuple[float, float]] = []
+    for upper_bound in sorted(bucket_series):
+        bucket_rate = rate(bucket_series[upper_bound], at, window)
+        if bucket_rate is None:
+            return None
+        rates.append((upper_bound, bucket_rate))
+
+    if not rates:
+        return None
+
+    total = rates[-1][1]
+    if total <= 0:
+        return None
+
+    finite_bounds = [bound for bound, _ in rates if bound != float("inf")]
+    if not finite_bounds:
+        return None
+
+    target = q * total
+    lower_bound = 0.0
+    lower_count = 0.0
+    for upper_bound, cumulative in rates:
+        if cumulative >= target:
+            if upper_bound == float("inf"):
+                return max(finite_bounds)
+            if cumulative <= lower_count:
+                return upper_bound
+            fraction = (target - lower_count) / (cumulative - lower_count)
+            return lower_bound + (upper_bound - lower_bound) * fraction
+        lower_bound = upper_bound
+        lower_count = cumulative
+
+    return max(finite_bounds)
