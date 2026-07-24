@@ -11,6 +11,8 @@ import math
 import pathlib
 import re
 
+import requests
+
 from samples import Sample
 
 _LINE = re.compile(r"^(?P<metric>[a-zA-Z_:][a-zA-Z0-9_:]*)(?:\{(?P<labels>.*)\})?\s+(?P<value>\S+)\s*$")
@@ -88,3 +90,103 @@ class FixtureSource:
                     )
                 )
         return collected
+
+
+RAW_METRICS = (
+    "vllm:time_to_first_token_seconds_bucket",
+    "vllm:time_to_first_token_seconds_sum",
+    "vllm:time_to_first_token_seconds_count",
+    "vllm:e2e_request_latency_seconds_bucket",
+    "vllm:e2e_request_latency_seconds_sum",
+    "vllm:e2e_request_latency_seconds_count",
+    "vllm:request_queue_time_seconds_bucket",
+    "vllm:request_prefill_time_seconds_bucket",
+    "vllm:external_prefix_cache_queries_total",
+    "vllm:external_prefix_cache_hits_total",
+    "vllm:prompt_tokens_recomputed_total",
+    "vllm:request_success_total",
+)
+
+
+class PrometheusError(RuntimeError):
+    """A query failed, or resolved to more than one serving host."""
+
+
+class PrometheusSource:
+    """Raw series from a Prometheus ``query_range``.
+
+    Fetches counters and histogram buckets untouched -- no ``rate``, no
+    ``histogram_quantile``. Derivation happens in ``metrics.py`` so the fixture
+    path and this path run identical math.
+    """
+
+    def __init__(
+        self,
+        base_url: str,
+        target: str,
+        model: str | None = None,
+        timeout: int = 30,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.target = target
+        self.model = model
+        self.timeout = timeout
+
+    def _selector(self) -> str:
+        parts = [f'server="{self.target}"']
+        if self.model:
+            parts.append(f'model_name="{self.model}"')
+        return "{" + ",".join(parts) + "}"
+
+    def fetch(self, start: int, end: int, step: int = 1) -> list[Sample]:
+        selector = self._selector()
+        collected: list[Sample] = []
+        seen_servers: set[str] = set()
+
+        for metric in RAW_METRICS:
+            payload = self._query_range(f"{metric}{selector}", start, end, step)
+            for stream in payload:
+                labels = {k: v for k, v in stream["metric"].items() if k != "__name__"}
+                if "server" in labels:
+                    seen_servers.add(labels["server"])
+                for timestamp, value in stream["values"]:
+                    try:
+                        parsed_value = float(value)
+                    except ValueError:
+                        continue
+                    if not math.isfinite(parsed_value):
+                        # Same guard as parse_exposition: a NaN reaching
+                        # metrics.rate() takes the counter-reset branch (every
+                        # comparison against NaN is False), poisoning the
+                        # running total so rate() returns nan instead of None.
+                        continue
+                    collected.append(
+                        Sample(
+                            timestamp=int(timestamp),
+                            metric=metric,
+                            labels=labels,
+                            value=parsed_value,
+                        )
+                    )
+
+        extra = seen_servers - {self.target}
+        if extra:
+            raise PrometheusError(
+                "Window resolves to more than one vLLM host: "
+                f"{sorted(seen_servers)}. Unexpected: {sorted(extra)}. "
+                "Aggregating across hosts would yield a latency figure "
+                "describing no real server."
+            )
+        return collected
+
+    def _query_range(self, query: str, start: int, end: int, step: int) -> list[dict]:
+        response = requests.get(
+            f"{self.base_url}/api/v1/query_range",
+            params={"query": query, "start": start, "end": end, "step": step},
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        body = response.json()
+        if body.get("status") != "success":
+            raise PrometheusError(f"Query failed: {query!r}: {body.get('error')}")
+        return body["data"]["result"]
