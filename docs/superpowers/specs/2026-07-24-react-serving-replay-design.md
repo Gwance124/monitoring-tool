@@ -24,8 +24,9 @@ from an empty axis.
 ## Data source: the /metrics endpoint, not logs
 
 vLLM natively exposes `GET /metrics` on its API port — a Prometheus
-text-exposition page of counters and histograms, regenerated per request. On
-the work fleet this is `http://192.168.3.4:8000/metrics`.
+text-exposition page of counters and histograms, regenerated per request.
+Several vLLM hosts are scraped on the work fleet; `http://192.168.3.4:8000/metrics`
+is the one verified while writing this design.
 
 Prometheus scrapes that endpoint and stores numeric samples in its TSDB. It
 does not store logs. vLLM's stdout engine logs are a separate stream and
@@ -142,7 +143,7 @@ extract_run.py --system mars --source fixture \
 # real capture, after experiments run
 extract_run.py --system mars --source prometheus \
     --prometheus-url http://solab-p7:9090 \
-    --target 192.168.3.4:8000 \
+    --target solab-x3 \
     --start 2026-08-01T10:00:00-07:00 --duration 900 --interval 1
 ```
 
@@ -173,17 +174,17 @@ runs the **vLLM V1 engine** — evidenced by `vllm:kv_cache_usage_perc` (V0 name
 it `gpu_cache_usage_perc`), `vllm:prefix_cache_queries_total`, and
 `vllm:engine_sleep_state`.
 
-Charted metrics, where `<selector>` pins the run to one vLLM host (see
-"Target selection is mandatory" below):
+Charted metrics. `$TARGET` is the value of `--target`, matched against the
+`server` label (see "Target selection is mandatory" below):
 
 ```promql
 histogram_quantile(0.95, sum by (le) (rate(
-  vllm:time_to_first_token_seconds_bucket{<selector>}[30s])))
+  vllm:time_to_first_token_seconds_bucket{server="$TARGET"}[30s])))
 
 histogram_quantile(0.95, sum by (le) (rate(
-  vllm:e2e_request_latency_seconds_bucket{<selector>}[30s])))
+  vllm:e2e_request_latency_seconds_bucket{server="$TARGET"}[30s])))
 
-vllm:time_to_first_token_seconds_count{<selector>}   # anchor detection
+vllm:time_to_first_token_seconds_count{server="$TARGET"}   # anchor detection
 ```
 
 Supporting metrics — captured to CSV, not charted:
@@ -206,9 +207,21 @@ are evidence, not chart content.
 
 ### Target selection is mandatory
 
-p7 scrapes **multiple vLLM hosts** through `file_sd/remote/vllm-exporter.yml`,
-each target carrying its own label. Every query must therefore be pinned to
-exactly one serving host.
+p7 scrapes **multiple vLLM hosts** through `file_sd/remote/vllm-exporter.yml`.
+Each target carries a `server` label naming the host:
+
+```yaml
+- targets:
+  - 192.168.3.73:8000
+  labels:
+    server: solab-x3
+```
+
+Every query must therefore be pinned to exactly one serving host.
+`--target solab-x3` becomes the selector `{server="solab-x3"}`.
+
+The `server` label is preferred over Prometheus's automatic `instance` label:
+it is readable at the command line and survives a host changing IP address.
 
 This is not a convenience. `sum by (le) (rate(...))` over an unfiltered
 selector aggregates histogram buckets across every scraped vLLM instance and
