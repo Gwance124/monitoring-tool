@@ -166,10 +166,14 @@ vLLM's native endpoint or a third-party sidecar with entirely different names.
 Deriving the fixture from the live endpoint removes the risk of building the
 parser against names the deployment does not have.
 
-The queries below are the expected defaults and **must be confirmed against
-that snapshot** before implementation proceeds.
+### Confirmed metric names
 
-Queried metrics:
+Verified 2026-07-24 against `http://192.168.3.4:8000/metrics`. The deployment
+runs the **vLLM V1 engine** — evidenced by `vllm:kv_cache_usage_perc` (V0 named
+it `gpu_cache_usage_perc`), `vllm:prefix_cache_queries_total`, and
+`vllm:engine_sleep_state`.
+
+Charted metrics:
 
 ```promql
 histogram_quantile(0.95,
@@ -181,19 +185,51 @@ histogram_quantile(0.95,
 vllm:time_to_first_token_seconds_count   # anchor detection
 ```
 
+Supporting metrics — captured to CSV, not charted:
+
+| Metric | Purpose |
+|---|---|
+| `vllm:request_queue_time_seconds` | Decomposes TTFT into queueing vs prefill |
+| `vllm:request_prefill_time_seconds` | Isolates the KV-reuse benefit from queue effects |
+| `vllm:external_prefix_cache_hits_total` / `_queries_total` | KV-connector hit rate — the path LMCache, Mooncake, and MARS plug into |
+| `vllm:prompt_tokens_recomputed_total` / `_cached_total` | Recompute volume vs cache reuse; defines the `recompute` baseline |
+
+These cost four extra columns and nothing at experiment time, whereas
+recovering them later would require re-running all four experiments on GPU
+hardware. They exist so the result can be defended: p95 TTFT alone conflates
+queue time with prefill time, and a reviewer may reasonably ask whether MARS's
+advantage is genuine KV reuse or lower queue occupancy under that load.
+
+The headline claim remains p95 TTFT versus recompute. The supporting metrics
+are evidence, not chart content.
+
 `--model` applies a label filter so a shared Prometheus serving multiple models
 can be disambiguated.
+
+Health and readiness probes hit the ASGI layer (`http_requests_total`) without
+entering the engine, so they do not increment `vllm:` request metrics. The
+`--anchor-sustain` guard is retained regardless, since engine warm-up and
+profiling runs remain possible sources of a false anchor.
 
 ## Data format
 
 `runs/<system>/<run-id>.csv`:
 
+Charted columns first, supporting columns after:
+
 ```
-timestamp,elapsed_seconds,system,ttft_p95_seconds,e2e_p95_seconds,requests_completed
-1784912400,-60,mars,21.87,50.07,1043
-1784912401,-59,mars,21.77,49.95,1049
-1784912460,0,mars,20.14,47.30,2287
+timestamp,elapsed_seconds,system,ttft_p95_seconds,e2e_p95_seconds,requests_completed,queue_p95_seconds,prefill_p95_seconds,ext_cache_hit_ratio,prompt_tokens_recomputed
+1784912400,-60,mars,21.87,50.07,1043,3.10,18.60,0.71,140233
+1784912401,-59,mars,21.77,49.95,1049,3.08,18.54,0.71,140698
+1784912460,0,mars,20.14,47.30,2287,2.94,17.11,0.74,171904
 ```
+
+`ext_cache_hit_ratio` is derived at extraction time as
+`rate(external_prefix_cache_hits_total) / rate(external_prefix_cache_queries_total)`,
+and is empty when the denominator is zero rather than reported as `0.0` — a
+system with no external KV store has an *undefined* hit rate, not a zero one.
+Writing `0.0` there would make `recompute` look like a failing cache instead of
+an absent one.
 
 `elapsed_seconds` is negative across the warm-up pre-fill segment and zero at
 benchmark start. Empty metric cells are legal and represent scrape gaps. Gaps
@@ -274,6 +310,8 @@ video path.
 - Scrape-gap handling: verify gaps survive to the CSV as empty cells and reach
   the renderer as line breaks.
 - Fixture to CSV golden-file comparison.
+- `ext_cache_hit_ratio` is empty, not `0.0`, when external cache queries are
+  zero — the case that distinguishes an absent KV store from a failing one.
 - Render smoke test: produce a 10-second clip, assert the output exists and has
   the expected frame count.
 
