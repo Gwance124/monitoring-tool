@@ -21,19 +21,55 @@ The deliverable is a video that reads as a live dashboard: a scrolling,
 already-full time-series window with live stat tiles, not a chart that grows
 from an empty axis.
 
-## Prerequisite: Prometheus must scrape vLLM before the runs
+## Data source: the /metrics endpoint, not logs
 
-`deploy/docker/prometheus/prometheus.yml` currently defines jobs for
-`react-benchmark-replay`, `node-exporter`, `dcgm-exporter`,
-`intel-pcm-exporter`, and `amd-pcm-exporter`. There is no vLLM job.
+vLLM natively exposes `GET /metrics` on its API port — a Prometheus
+text-exposition page of counters and histograms, regenerated per request. On
+the work fleet this is `http://192.168.3.4:8000/metrics`.
 
-Prometheus cannot collect retroactively. A vLLM scrape job must be added and
-running **before** the four experiments execute, or no data will exist to
-extract. This is step one of implementation, not a later concern.
+Prometheus scrapes that endpoint and stores numeric samples in its TSDB. It
+does not store logs. vLLM's stdout engine logs are a separate stream and
+contain neither TTFT nor end-to-end latency, so nothing in this design reads
+them.
 
-Global `scrape_interval` is `5s`. That is the floor on achievable CSV
-resolution; `--interval` values finer than the scrape interval resample
-without adding information.
+Consequently, whether vLLM runs under Docker or as a bare `vllm serve` process
+does not affect this design. It changes only the target address in
+`file_sd/remote/vllm-exporter.yml`.
+
+## Prerequisite: scrape interval
+
+The work-server Prometheus already scrapes vLLM via
+`file_sd/remote/vllm-exporter.yml`. Its `global.scrape_interval` is `15s`.
+
+15s is too coarse. A 300s benchmark yields 20 points, and the 60-second
+scrolling window would hold four points per line — a jagged polyline rather
+than a continuous trace.
+
+Set `scrape_interval: 1s` **as a per-job override on the vLLM job only**:
+
+```yaml
+  - job_name: vllm-exporter
+    scrape_interval: 1s
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/vllm-exporter.yml
+```
+
+`global` stays at 15s. It governs the node, DCGM, and PCM exporter jobs, which
+are high-cardinality and whose metrics do not change meaningfully at 1s;
+lowering it globally multiplies their write volume for no benefit. This
+per-job override mirrors the existing `react-benchmark-replay` job, which
+already runs at 1s.
+
+1s yields 60 points across the scrolling window and 300 across the benchmark.
+Going below 1s is not useful — vLLM updates these metrics on the engine loop,
+so sub-second scrapes largely resample unchanged values.
+
+Prometheus cannot collect retroactively. The interval override must be in place
+**before** the four experiments run.
+
+The scrape interval is the floor on CSV resolution; `--interval` values finer
+than it resample without adding information.
 
 ## Alignment: anchor on first served token
 
@@ -43,8 +79,8 @@ required.
 
 ```
 anchor := the first timestamp at which vllm:time_to_first_token_seconds_count
-          begins increasing AND continues increasing for >= 3 consecutive
-          scrapes
+          begins increasing AND continues increasing throughout the following
+          --anchor-sustain window (default 10s)
 
 elapsed_seconds := timestamp - anchor
 ```
@@ -56,9 +92,14 @@ Properties:
   `elapsed = 0` denotes the same physical event across all four runs.
 - **Operator timing precision is unnecessary.** A 900s search window around a
   360s test is sufficient.
-- **The three-consecutive-scrape guard** rejects false anchors from health
-  checks and readiness probes, which would otherwise pin `t=0` minutes early
-  and silently misalign the entire comparison.
+- **The sustain guard** rejects false anchors from health checks and readiness
+  probes, which would otherwise pin `t=0` minutes early and silently misalign
+  the entire comparison.
+
+The guard is expressed as a **duration** (`--anchor-sustain`, default `10s`),
+not a sample count. A sample-count guard silently tightens as the scrape
+interval drops — "3 consecutive scrapes" means 45s at a 15s interval but only
+3s at 1s, which is short enough for a burst of readiness probes to satisfy.
 
 This is valid because only one system occupies the vLLM instance at a time, so
 the only sustained request load in the window is the run itself.
@@ -102,13 +143,31 @@ extract_run.py --system mars --source fixture \
 extract_run.py --system mars --source prometheus \
     --prometheus-url http://solab-p7:9090 \
     --model <model-id> \
-    --start 2026-08-01T10:00:00-07:00 --duration 900 --interval 5
+    --start 2026-08-01T10:00:00-07:00 --duration 900 --interval 1
 ```
 
 Both emit an identical CSV schema. The fixture consists of Prometheus
 text-exposition snapshots, one per scrape interval, so the histogram-parsing
 code path is exercised by the dummy data as well. The parser is not bypassed
 during development and will not first fail on experiment day.
+
+### Fixture derivation
+
+The fixture is generated from a **real idle snapshot** of
+`http://192.168.3.4:8000/metrics`, captured before any experiments run. An
+idle endpoint still emits every `# HELP`/`# TYPE` line and every histogram
+bucket boundary, so the snapshot supplies the authentic metric names and `le`
+buckets for the deployed vLLM version. Synthetic values are then layered onto
+that real structure.
+
+This matters because metric names vary across vLLM versions — the V1 engine
+renamed several — and because a job named `vllm-exporter` could denote either
+vLLM's native endpoint or a third-party sidecar with entirely different names.
+Deriving the fixture from the live endpoint removes the risk of building the
+parser against names the deployment does not have.
+
+The queries below are the expected defaults and **must be confirmed against
+that snapshot** before implementation proceeds.
 
 Queried metrics:
 
@@ -132,7 +191,7 @@ can be disambiguated.
 ```
 timestamp,elapsed_seconds,system,ttft_p95_seconds,e2e_p95_seconds,requests_completed
 1784912400,-60,mars,21.87,50.07,1043
-1784912405,-55,mars,21.77,49.95,1102
+1784912401,-59,mars,21.77,49.95,1049
 1784912460,0,mars,20.14,47.30,2287
 ```
 
