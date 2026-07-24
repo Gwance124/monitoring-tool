@@ -124,6 +124,12 @@ def write_fixture(
     """Write ``<unix_timestamp>.prom`` scrapes for one system."""
     out_dir = pathlib.Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Delete any stale .prom files from previous runs. A stale file from an
+    # earlier run (e.g. with different --seed or --seconds) would be
+    # indistinguishable from a generated one and could silently fill the
+    # deliberate scrape gap, breaking the determinism guarantee.
+    for stale in out_dir.glob("*.prom"):
+        stale.unlink()
     for offset, text in synthesize(system, seconds, seed).items():
         (out_dir / f"{start + offset}.prom").write_text(text, encoding="utf-8")
 

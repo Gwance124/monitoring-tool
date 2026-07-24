@@ -61,3 +61,24 @@ def test_recompute_has_no_external_cache_queries(tmp_path: Path):
     got = FixtureSource(tmp_path, server="solab-x3").fetch(1000, 1400)
     queries = select(got, "vllm:external_prefix_cache_queries_total")
     assert all(sample.value == 0.0 for sample in queries)
+
+
+def test_regenerating_removes_stale_scrapes(tmp_path: Path):
+    # First write
+    write_fixture("mars", tmp_path, start=1000, seconds=200, seed=1)
+    first_run_files = sorted({p.stem for p in tmp_path.glob("*.prom")})
+
+    # Write a stale file at the gap offset (GAP_AT=180 relative seconds)
+    stale_file = tmp_path / "1180.prom"
+    stale_file.write_text("stale content")
+    files_with_stale = sorted({p.stem for p in tmp_path.glob("*.prom")})
+    assert "1180" in files_with_stale
+
+    # Regenerate with same parameters
+    write_fixture("mars", tmp_path, start=1000, seconds=200, seed=1)
+    second_run_files = sorted({p.stem for p in tmp_path.glob("*.prom")})
+
+    # Stale file should be gone
+    assert "1180" not in second_run_files
+    # Contents should match the first run exactly
+    assert second_run_files == first_run_files
