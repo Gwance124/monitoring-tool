@@ -7,6 +7,7 @@ job -- so the fixture path exercises the same code as production.
 
 from __future__ import annotations
 
+import math
 import pathlib
 import re
 
@@ -29,6 +30,18 @@ def parse_exposition(text: str, timestamp: int) -> list[Sample]:
         try:
             value = float(match.group("value"))
         except ValueError:
+            continue
+        if not math.isfinite(value):
+            # A NaN or +/-Inf sample value is dropped here, not passed through.
+            # metrics.rate() treats "current.value >= previous.value" as a
+            # counter-reset check; every comparison against NaN is False, so a
+            # NaN sample takes the reset branch and does `total += NaN`, which
+            # poisons the running total for the rest of that rate() call while
+            # `span` stays a valid positive number -- so rate() returns NaN
+            # instead of None, and that NaN silently propagates through
+            # mean_rate/histogram_quantile. Dropping the sample here instead
+            # means the window simply holds one fewer point, which rate()
+            # already handles by returning None when fewer than two remain.
             continue
         raw_labels = match.group("labels") or ""
         labels = {m.group("key"): m.group("value") for m in _LABEL.finditer(raw_labels)}

@@ -72,3 +72,43 @@ def test_fixture_source_synthesizes_the_server_label(tmp_path: Path):
 def test_fixture_source_returns_empty_for_a_window_with_no_scrapes(tmp_path: Path):
     (tmp_path / "1000.prom").write_text(SCRAPE)
     assert FixtureSource(tmp_path, server="solab-x3").fetch(start=2000, end=2100) == []
+
+
+def test_drops_samples_with_a_nan_value():
+    text = (
+        'vllm:num_requests_running{engine="0"} NaN\n'
+        'process_open_fds 42.0\n'
+    )
+    got = parse_exposition(text, timestamp=1000)
+    assert all(s.metric != "vllm:num_requests_running" for s in got)
+    assert len(got) == 1
+    assert got[0].metric == "process_open_fds"
+    assert got[0].value == 42.0
+
+
+def test_drops_samples_with_an_infinite_value():
+    text = (
+        'vllm:num_requests_running{engine="0"} +Inf\n'
+        'vllm:num_requests_waiting{engine="0"} -Inf\n'
+        'process_open_fds 42.0\n'
+    )
+    got = parse_exposition(text, timestamp=1000)
+    assert all(
+        s.metric not in ("vllm:num_requests_running", "vllm:num_requests_waiting")
+        for s in got
+    )
+    assert len(got) == 1
+    assert got[0].metric == "process_open_fds"
+
+
+def test_the_inf_bucket_label_still_parses():
+    # Guards against confusing the sample *value* with the le="+Inf" *label*:
+    # the label is a string and must keep parsing normally even though a
+    # value of +Inf is now dropped.
+    text = (
+        'vllm:time_to_first_token_seconds_bucket{engine="0",le="+Inf"} 3140.0\n'
+    )
+    got = parse_exposition(text, timestamp=1000)
+    assert len(got) == 1
+    assert got[0].labels["le"] == "+Inf"
+    assert got[0].value == 3140.0
