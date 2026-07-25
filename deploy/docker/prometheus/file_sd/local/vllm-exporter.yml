@@ -1,0 +1,14 @@
+# Placeholder target -- vLLM runs on the bare GPU host, not inside this
+# Compose project, so there is no in-network service name to point at here
+# the way the other exporters do. Edit the host:port below before starting
+# Prometheus.
+#
+# The `server` label is required, not cosmetic: every query the extraction
+# tooling (benchmark/react_agent/extract_run.py) issues is pinned to
+# `{server="<target>"}`, and Prometheus only attaches this label via
+# file_sd -- vLLM's native /metrics endpoint never emits it itself. The value
+# here must match whatever you pass to `--target`.
+- targets:
+    - 192.168.3.73:8000
+  labels:
+    server: solab-x3
