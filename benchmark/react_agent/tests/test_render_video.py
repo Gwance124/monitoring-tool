@@ -89,3 +89,39 @@ def test_render_writes_a_file(runs: Path, tmp_path: Path):
     result = render(Replay.load(runs), output, fps=5, speed=10, window=60)
     assert result.exists()
     assert result.stat().st_size > 0
+
+
+def test_line_panels_draw_only_mean_no_p95(runs: Path):
+    dashboard = Dashboard(Replay.load(runs), window=60)
+    dashboard.draw(at=60)
+    assert set(dashboard.lines.keys()) == {
+        (prefix, system, "mean")
+        for prefix in ("ttft", "e2e")
+        for system in SYSTEMS
+    }
+    assert len(dashboard.ttft_axis.get_lines()) == len(SYSTEMS)
+
+
+def test_legend_has_no_orphaned_dashed_entry(runs: Path):
+    dashboard = Dashboard(Replay.load(runs), window=60)
+    labels = {handle.get_label() for handle in dashboard.figure.legends[0].legend_handles}
+    assert "p95" not in labels
+    assert "mean" in labels
+
+
+def test_missing_bar_value_renders_as_no_data_not_zero(runs: Path, tmp_path: Path):
+    replay = Replay.load(runs)
+    dashboard = Dashboard(replay, window=60)
+
+    original_value_at = replay.value_at
+    def patched(system, metric, at):
+        if system == "recompute" and metric == "ttft_mean_seconds":
+            return None
+        return original_value_at(system, metric, at)
+    replay.value_at = patched
+
+    dashboard.draw(at=60)
+    axis = dashboard.bar_ttft_axis
+    texts = [text.get_text() for text in axis.texts]
+    assert "—" in texts, "missing value should render as an em dash, not a number"
+    assert "0.00s" not in texts

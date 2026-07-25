@@ -76,10 +76,6 @@ class Dashboard:
                     [], [], color=COLORS[system], linewidth=width,
                     solid_capstyle="round", zorder=3,
                 )[0]
-                self.lines[(prefix, system, "p95")] = axis.plot(
-                    [], [], color=COLORS[system], linewidth=width * 0.6,
-                    linestyle=(0, (4, 3)), alpha=0.45, zorder=2,
-                )[0]
 
     def _style_line_axis(self, axis, title: str) -> None:
         axis.set_facecolor(PANEL)
@@ -109,8 +105,6 @@ class Dashboard:
         ]
         handles += [
             Line2D([], [], color=INK_MUTED, linewidth=2.5, label="mean"),
-            Line2D([], [], color=INK_MUTED, linewidth=1.6,
-                   linestyle=(0, (4, 3)), label="p95"),
         ]
         legend = self.figure.legend(
             handles=handles, loc="lower center", ncol=6, frameon=False,
@@ -124,37 +118,42 @@ class Dashboard:
         values, labels, colors = [], [], []
         for system in reversed(SYSTEMS):
             value = self.replay.value_at(system, metric, round(at))
-            values.append(0.0 if value is None else value)
+            values.append(value)
             labels.append(LABELS[system])
             colors.append(COLORS[system])
 
         positions = range(len(values))
-        axis.barh(list(positions), values, color=colors, height=0.62, zorder=3)
+        measured = [value for value in values if value is not None]
+        span = max(measured) if measured else 1.0
+        span = span if span > 0 else 1.0
+        # Missing values get a short muted stub, not a fabricated 0.0 bar --
+        # a real near-zero measurement must stay visually distinct from a gap.
+        NO_DATA_STUB = span * 0.03
+        bar_lengths = [NO_DATA_STUB if value is None else value for value in values]
+        bar_colors = [GRID if value is None else color for value, color in zip(values, colors)]
+        axis.barh(list(positions), bar_lengths, color=bar_colors, height=0.62, zorder=3)
         axis.set_yticks(list(positions))
         axis.set_yticklabels(labels, color=INK_MUTED, fontsize=13)
-        span = max(values) if max(values) > 0 else 1.0
         axis.set_xlim(0, span * 1.28)
-        for position, value in zip(positions, values):
-            axis.text(value + span * 0.03, position, f"{value:.2f}s",
-                      va="center", color=INK, fontsize=13, fontweight="bold")
+        for position, value, length in zip(positions, values, bar_lengths):
+            label = "—" if value is None else f"{value:.2f}s"
+            color = INK_MUTED if value is None else INK
+            axis.text(length + span * 0.03, position, label,
+                      va="center", color=color, fontsize=13, fontweight="bold")
 
     def draw(self, at: float) -> None:
         at = float(at)
         for axis, prefix in ((self.ttft_axis, "ttft"), (self.e2e_axis, "e2e")):
             highest = 0.0
             for system in SYSTEMS:
-                for kind, column in (
-                    ("mean", f"{prefix}_mean_seconds"),
-                    ("p95", f"{prefix}_p95_seconds"),
-                ):
-                    xs, ys = self.replay.window(system, column, round(at), self.window)
-                    # None stays None: matplotlib breaks the line at NaN, so a
-                    # scrape gap reads as a gap instead of a bridged segment.
-                    plotted = [float("nan") if y is None else y for y in ys]
-                    self.lines[(prefix, system, kind)].set_data(xs, plotted)
-                    finite = [y for y in ys if y is not None]
-                    if finite:
-                        highest = max(highest, max(finite))
+                xs, ys = self.replay.window(system, f"{prefix}_mean_seconds", round(at), self.window)
+                # None stays None: matplotlib breaks the line at NaN, so a
+                # scrape gap reads as a gap instead of a bridged segment.
+                plotted = [float("nan") if y is None else y for y in ys]
+                self.lines[(prefix, system, "mean")].set_data(xs, plotted)
+                finite = [y for y in ys if y is not None]
+                if finite:
+                    highest = max(highest, max(finite))
             axis.set_xlim(at - self.window, at)
             axis.set_ylim(0, highest * 1.18 if highest else 1.0)
 
@@ -169,7 +168,10 @@ class Dashboard:
             self.subline_text.set_text("")
         else:
             self.headline_text.set_text(f"{improvement * 100:.1f}%")
-            self.headline_text.set_color(COLORS["mars"] if improvement > 0 else "#e66767")
+            # Text carries no series identity: ink for the expected-positive
+            # case, a distinct non-series red for a regression that must read
+            # differently. "#e66767" is not among the four series colors.
+            self.headline_text.set_color(INK if improvement > 0 else "#e66767")
             runner_up = self.replay.second_best("mars", "ttft_mean_seconds", round(at))
             parts = [f"lower mean TTFT than {LABELS[self.baseline]}"]
             if runner_up and runner_up != self.baseline:
