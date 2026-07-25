@@ -47,6 +47,13 @@ be powered off or running something else entirely.
    compose stack's `deploy/docker/prometheus/prometheus.yml` already has a
    `vllm-exporter` job at 1s; if you are pointing at a different Prometheus
    (e.g. `solab-p7`), confirm that instance's config matches.
+
+   The job reads targets from `file_sd/local/vllm-exporter.yml` or
+   `file_sd/remote/vllm-exporter.yml` (whichever `PROMETHEUS_FILE_SD_DIR`
+   selects). Both ship with a placeholder host and `server: solab-x3` --
+   **edit the real host:port and `server` label in before starting
+   Prometheus**, or the job scrapes nothing and Prometheus starts healthy
+   with zero targets. The `server` label must match `--target` below.
 2. Retention is 15 days. **Extract each run the same day you run it** -- the CSV
    is the durable record, after which retention stops mattering.
 
@@ -68,6 +75,13 @@ be powered off or running something else entirely.
    describing no real machine -- and it would do this *silently*: the query
    still succeeds and produces a perfectly normal-looking number. Extraction
    aborts instead if the resolved window still spans more than one instance.
+
+   `server` alone does not fully pin a query, either: a host serving two
+   models, or running two engine processes, still matches once per
+   `model_name` or `engine`. If the extracted window resolves to more than
+   one time series for the same metric, extraction aborts with an error
+   naming the metric and the distinct label sets found -- pass `--model` (as
+   in the example above) or otherwise narrow the query, then re-run.
 
 4. Repeat for `lmcache`, `mooncake`, `recompute`.
 

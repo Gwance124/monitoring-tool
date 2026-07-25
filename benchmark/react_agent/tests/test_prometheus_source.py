@@ -74,6 +74,12 @@ def test_converts_matrix_results_to_samples(monkeypatch):
 
 
 def test_aborts_when_the_window_spans_multiple_instances(monkeypatch):
+    # NOTE: this payload is synthetic -- the selector already pins
+    # `server="solab-x3"`, so real Prometheus cannot return a second `server`
+    # value here; every returned series would carry exactly the pinned value.
+    # The assertion is kept as a defense-in-depth check, but it is the
+    # engine/model tests below that exercise a window Prometheus could
+    # actually return.
     payload = {
         "status": "success",
         "data": {
@@ -87,6 +93,100 @@ def test_aborts_when_the_window_spans_multiple_instances(monkeypatch):
     install_fake_get(monkeypatch, lambda q: payload)
     with pytest.raises(PrometheusError, match="solab-x9"):
         PrometheusSource("http://p7:9090", target="solab-x3").fetch(1000, 1001)
+
+
+def test_aborts_when_a_metric_resolves_to_multiple_engines(monkeypatch):
+    # Reachable in production: the selector pins `server`, but not `engine`.
+    # A host running two vLLM engine processes for the same server label
+    # matches this query twice, and the two series would silently merge
+    # under one metric name.
+    payload = {
+        "status": "success",
+        "data": {
+            "resultType": "matrix",
+            "result": [
+                {
+                    "metric": {
+                        "__name__": "vllm:time_to_first_token_seconds_sum",
+                        "server": "solab-x3",
+                        "engine": "0",
+                    },
+                    "values": [[1000, "1"]],
+                },
+                {
+                    "metric": {
+                        "__name__": "vllm:time_to_first_token_seconds_sum",
+                        "server": "solab-x3",
+                        "engine": "1",
+                    },
+                    "values": [[1000, "2"]],
+                },
+            ],
+        },
+    }
+    install_fake_get(monkeypatch, lambda q: payload)
+    with pytest.raises(PrometheusError, match="resolves to more than one time series"):
+        PrometheusSource("http://p7:9090", target="solab-x3").fetch(1000, 1001)
+
+
+def test_aborts_when_a_metric_resolves_to_multiple_models(monkeypatch):
+    # Reachable in production: the selector pins `server`, but not
+    # `model_name` unless --model is passed. A host serving two models
+    # matches this query twice for the same server.
+    payload = {
+        "status": "success",
+        "data": {
+            "resultType": "matrix",
+            "result": [
+                {
+                    "metric": {
+                        "__name__": "vllm:time_to_first_token_seconds_sum",
+                        "server": "solab-x3",
+                        "model_name": "openai/gpt-oss-20b",
+                    },
+                    "values": [[1000, "1"]],
+                },
+                {
+                    "metric": {
+                        "__name__": "vllm:time_to_first_token_seconds_sum",
+                        "server": "solab-x3",
+                        "model_name": "meta-llama/Llama-3-8B",
+                    },
+                    "values": [[1000, "2"]],
+                },
+            ],
+        },
+    }
+    install_fake_get(monkeypatch, lambda q: payload)
+    with pytest.raises(PrometheusError, match="resolves to more than one time series"):
+        PrometheusSource("http://p7:9090", target="solab-x3").fetch(1000, 1001)
+
+
+def test_histogram_buckets_do_not_trigger_the_abort(monkeypatch):
+    # A single histogram series legitimately fans out into many `le` values.
+    # The new per-metric/per-label-set check must exclude `le` or it would
+    # abort on every histogram it ever sees.
+    payload = {
+        "status": "success",
+        "data": {
+            "resultType": "matrix",
+            "result": [
+                {
+                    "metric": {
+                        "__name__": "vllm:time_to_first_token_seconds_bucket",
+                        "server": "solab-x3",
+                        "le": le,
+                    },
+                    "values": [[1000, "1"]],
+                }
+                for le in ("0.1", "0.5", "1.0", "2.5", "5.0", "+Inf")
+            ],
+        },
+    }
+    install_fake_get(monkeypatch, lambda q: payload)
+    got = PrometheusSource("http://p7:9090", target="solab-x3").fetch(1000, 1001)
+    buckets = [s for s in got if s.metric == "vllm:time_to_first_token_seconds_bucket"]
+    assert {s.labels["le"] for s in buckets} == {"0.1", "0.5", "1.0", "2.5", "5.0", "+Inf"}
 
 
 def test_raises_on_prometheus_error_status(monkeypatch):

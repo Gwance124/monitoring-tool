@@ -176,6 +176,10 @@ class PrometheusSource:
         selector = self._selector()
         collected: list[Sample] = []
         seen_servers: set[str] = set()
+        # Per metric, the set of distinct identifying label sets seen so far,
+        # excluding `le` (histogram bucket boundaries are expected to vary
+        # within one series; every other label is not).
+        label_sets_by_metric: dict[str, set[tuple[tuple[str, str], ...]]] = {}
 
         for metric in RAW_METRICS:
             payload = self._query_range(f"{metric}{selector}", start, end, step)
@@ -183,6 +187,8 @@ class PrometheusSource:
                 labels = {k: v for k, v in stream["metric"].items() if k != "__name__"}
                 if "server" in labels:
                     seen_servers.add(labels["server"])
+                identity = tuple(sorted((k, v) for k, v in labels.items() if k != "le"))
+                label_sets_by_metric.setdefault(metric, set()).add(identity)
                 for timestamp, value in stream["values"]:
                     try:
                         parsed_value = float(value)
@@ -203,6 +209,11 @@ class PrometheusSource:
                         )
                     )
 
+        # Kept as defense-in-depth, but the selector already pins `server`, so
+        # every returned series carries exactly that value in practice -- this
+        # branch cannot fire against a real Prometheus. The check below is the
+        # one that actually catches an unpinned dimension (typically
+        # `model_name` or `engine`).
         extra = seen_servers - {self.target}
         if extra:
             raise PrometheusError(
@@ -211,6 +222,20 @@ class PrometheusSource:
                 "Aggregating across hosts would yield a latency figure "
                 "describing no real server."
             )
+
+        for metric, label_sets in label_sets_by_metric.items():
+            if len(label_sets) > 1:
+                found = [dict(labels) for labels in sorted(label_sets)]
+                raise PrometheusError(
+                    f"{metric!r} resolves to more than one time series within "
+                    f"this window: {found}. `server` alone does not uniquely "
+                    "identify a series -- `model_name` or `engine` (or another "
+                    "label) also varies here. Aggregating across them would "
+                    "merge unrelated series under one metric name and produce "
+                    "a statistic describing neither. Pin the missing dimension "
+                    "(e.g. pass --model) and re-run."
+                )
+
         return collected
 
     def _query_range(self, query: str, start: int, end: int, step: int) -> list[dict]:
