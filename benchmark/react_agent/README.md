@@ -1,159 +1,119 @@
-# ReAct Serving Benchmark
+# ReAct serving benchmark
 
-This package compares MARS, LMCache, Mooncake, and recompute even though only
-one system can occupy the serving host at a time.
+Compares MARS, LMCache, Mooncake, and recompute on ReAct agent serving when only
+one system can occupy the vLLM host at a time.
+
+## How the runs get onto one axis
+
+Each run happens at a different wall-clock time, and each system takes a
+different amount of time to become ready. So wall-clock start is not the anchor.
+
+Instead, `t=0` is derived from the data: the first timestamp at which
+`vllm:time_to_first_token_seconds_count` rises and keeps rising for
+`--anchor-sustain` seconds (default 10). Startup delay cancels, because each run
+anchors on its own first served token.
+
+**You do not need to time anything.** `--start` and `--duration` define a search
+window that only has to *contain* the run. Pad it generously.
+
+**`--anchor-sustain` has an operational limit.** An anchor is confirmed only if
+the request counter never stalls for more than half the sustain window. At the
+default of 10s, that means a workload completing a request less often than once
+per 5 seconds will never confirm an anchor, and `extract_run.py` fails outright
+rather than guess at one. This is expected behavior for a low-concurrency ReAct
+workload, not a bug: raise `--anchor-sustain` until it comfortably exceeds twice
+the gap between completions, and re-run extraction.
 
 ## Data flow
 
-```text
-vLLM /metrics
-      |
-      v
-Prometheus query_range -- one isolated five-minute run per system
-      |
-      v
-runs/<system>/<run-id>.csv
-  timestamp          original Unix timestamp
-  elapsed_seconds    timestamp - first timestamp
-  ttft_p95_seconds   p95 vLLM time to first token
-  e2e_p95_seconds    p95 vLLM end-to-end request latency
-      |
-      v
-replay_exporter.py -- re-emits all saved systems at the same wall-clock instant
-      |
-      v
-Prometheus -> Grafana shared comparison panels
-```
+    vLLM /metrics  (192.168.3.x:8000, native endpoint -- not logs)
+          |  Prometheus PULLS every 1s, continuously
+          v
+    Prometheus on solab-p7  (15 day retention)
+          |  extract_run.py queries query_range, any time afterwards
+          v
+    runs/<system>/<run-id>.csv  +  .json manifest
+          |
+          v
+    render_video.py  ->  outputs/react-serving-replay.mp4
 
-The replay exporter is necessary because Prometheus time-series panels use
-wall-clock timestamps. It preserves the normalized CSV as the benchmark record,
-then maps equal `elapsed_seconds` values onto equal scrape times for display and
-recording.
+`extract_run.py` never contacts the GPU host. By extraction time that machine can
+be powered off or running something else entirely.
 
-## 1. Capture each isolated run
+## Prerequisites, before any experiment
 
-Start the selected serving stack and its workload, note the test start time,
-then run:
+1. The vLLM job must be scraped at `scrape_interval: 1s`. Prometheus cannot
+   collect retroactively, so this must be in place *before* the runs. The local
+   compose stack's `deploy/docker/prometheus/prometheus.yml` already has a
+   `vllm-exporter` job at 1s; if you are pointing at a different Prometheus
+   (e.g. `solab-p7`), confirm that instance's config matches.
+2. Retention is 15 days. **Extract each run the same day you run it** -- the CSV
+   is the durable record, after which retention stops mattering.
 
-```bash
-python3 benchmark/react_agent/capture_run.py \
-  --system mars \
-  --prometheus-url http://localhost:9090 \
-  --start 2026-07-24T10:00:00-07:00 \
-  --duration 300
-```
+## Running an experiment
 
-Repeat with `--system lmcache`, `--system mooncake`, and
-`--system recompute`. The default queries are:
+1. Start one serving system and its ReAct workload. Let it run ~360 seconds.
+2. Note roughly when you started. "Around 10am" is precise enough.
+3. Extract:
 
-```promql
-histogram_quantile(
-  0.95,
-  sum by (le) (rate(vllm:time_to_first_token_seconds_bucket[30s]))
-)
-```
+       python3 extract_run.py --system mars --source prometheus \
+           --prometheus-url http://solab-p7:9090 \
+           --target solab-x3 \
+           --model openai/gpt-oss-20b \
+           --start 2026-08-01T09:55:00-07:00 --duration 900
 
-```promql
-histogram_quantile(
-  0.95,
-  sum by (le) (rate(vllm:e2e_request_latency_seconds_bucket[30s]))
-)
-```
+   `--target` is required. Several vLLM hosts share one `file_sd` file, each
+   carrying its own `server` label. Without `--target`, the query would
+   aggregate across every host Prometheus knows about and report a latency
+   describing no real machine -- and it would do this *silently*: the query
+   still succeeds and produces a perfectly normal-looking number. Extraction
+   aborts instead if the resolved window still spans more than one instance.
 
-Use `--ttft-query` or `--e2e-query` if the deployment needs model, instance, or
-workload label filters. vLLM exposes both histograms from its `/metrics`
-endpoint; see the
-[official vLLM production metrics reference](https://docs.vllm.ai/en/latest/usage/metrics/).
+4. Repeat for `lmcache`, `mooncake`, `recompute`.
 
-The command writes an immutable CSV plus a JSON manifest under `runs/`. It
-refuses to overwrite an existing run unless `--force` is supplied.
+## Trying it without real data
 
-## 2. Start the dashboard
+The fixture scrapes are generated, not committed (2076 files, ~16MB, and fully
+deterministic from the generator) -- generate them first, from
+`benchmark/react_agent`:
 
-Generate the illustrative dataset once if no real captures exist:
+    python3 -m fixtures.generate --out fixtures
+    for s in mars lmcache mooncake recompute; do
+      python3 extract_run.py --system "$s" --source fixture \
+        --fixture "fixtures/$s" --target solab-x3
+    done
+    python3 render_video.py --output ../../outputs/react-serving-replay.mp4
 
-```bash
-python3 benchmark/react_agent/generate_demo_data.py
-```
+If `ffmpeg` is missing or fails at render time (a broken system install, not a
+project bug), `render_video.py` falls back to an animated GIF at the same path
+with a `.gif` extension instead of `.mp4`, and prints which one it wrote. Check
+the printed path, not just the exit code, to know which you got.
 
-Then start the existing monitoring stack:
+## What is measured
 
-```bash
-docker compose -f deploy/docker/docker-compose.yaml up -d
-```
+The headline improvement uses **mean** TTFT (`rate(_sum)/rate(_count)`), which is
+exact. p95 is captured in every CSV alongside the mean but is deliberately never
+the headline and never plotted: vLLM's histogram buckets near this deployment's
+p95 (~3.7s) are 2.5s wide, wide enough to swallow the effect being measured. A
+p95 quoted from this histogram would be quantization noise, not a measurement.
+See the design doc for the full argument.
 
-Open Grafana at <http://localhost:3000> and select:
+Also captured, not charted: queue time, prefill time, external prefix cache hit
+ratio, and recomputed prompt tokens. These decompose TTFT into queueing versus
+prefill, which is what lets the result be defended.
 
-```text
-ReAct AI Agent Serving / ReAct Serving Benchmark Comparison
-```
+**Empty CSV cells are meaningful -- do not fill them in.** An empty cell marks a
+genuinely undefined value, not a missing zero: either a scrape gap, or (for
+`ext_cache_hit_ratio` on `recompute`) a ratio that has no denominator because
+`recompute` has no external KV cache to query. Treating either as `0` fabricates
+a data point that was never measured.
 
-The replay exporter selects the latest CSV for each system and loops through
-the common elapsed-time range. Set `BENCHMARK_REPLAY_SPEED=10` to replay a
-five-minute test in 30 seconds.
+## Grafana
 
-The replay stops at its final sample by default, so a recording ends with the
-progress bar and all metric values visibly held at `300 s`. Set
-`BENCHMARK_REPLAY_LOOP=true` only for a continuously looping wall display.
-`POST http://localhost:9108/reset` starts a new replay at `t=0`.
-For a clean recording, call `/prepare`, wait for one Prometheus scrape while
-the exporter is held at `t=0`, and then call `/start`.
+`replay_exporter.py` and `grafana/react-serving-benchmark.json` still work for
+interactive viewing over an SSH tunnel. They are no longer the video path; the
+renderer is headless and needs no browser.
 
-MARS improvement is exported as the live fraction:
+## Tests
 
-```text
-(recompute TTFT - MARS TTFT) / recompute TTFT
-```
-
-Grafana formats that fraction as a percentage. For example, `0.20` is shown as
-`20%`; the underlying value remains a calculated ratio rather than a hard-coded
-percentage.
-
-## 3. Select exact run files
-
-By default, the lexicographically latest CSV per system is used. To pin a
-comparison, mount a JSON file and set `BENCHMARK_RUN_SELECTION`:
-
-```json
-{
-  "mars": "mars/20260724T170000Z.csv",
-  "lmcache": "lmcache/20260724T172000Z.csv",
-  "mooncake": "mooncake/20260724T173000Z.csv",
-  "recompute": "recompute/20260724T174000Z.csv"
-}
-```
-
-Paths are relative to `BENCHMARK_RUNS_DIR`. Restart the replay exporter after
-changing the selection.
-
-## 4. Generate the replay video and PowerPoint
-
-```bash
-python3 benchmark/react_agent/render_replay_video.py \
-  --runs-dir benchmark/react_agent/runs \
-  --output outputs/react-serving-benchmark-replay.mp4
-```
-
-The repository deliverable also includes a PowerPoint with that MP4 embedded.
-The included dataset is explicitly labeled illustrative; regenerate both
-artifacts after capturing real runs.
-
-## Record the native Grafana dashboard
-
-This is the preferred video path when Grafana is available. It captures Grafana
-in kiosk mode instead of redrawing its charts:
-
-```bash
-npm install --prefix benchmark/react_agent/recorder
-BENCHMARK_REPLAY_SPEED=10 \
-  docker compose -f deploy/docker/docker-compose.yaml up -d \
-  prometheus benchmark-replay grafana
-npm run --prefix benchmark/react_agent/recorder record
-```
-
-The recorder holds the exporter at `t=0`, waits for the first scrape, starts the
-replay, and records through the held `t=300` endpoint. Its output is:
-
-```text
-outputs/react-serving-grafana-replay.mp4
-```
+    python3 -m pytest

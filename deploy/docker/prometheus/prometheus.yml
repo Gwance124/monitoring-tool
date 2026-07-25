@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: react-benchmark-replay
+    scrape_interval: 1s
+    static_configs:
+      - targets:
+          - benchmark-replay:9108
+
+  # vLLM exposes /metrics natively. 1s here, not in `global`, because the node,
+  # DCGM, and PCM jobs are high-cardinality and gain nothing from sub-15s
+  # scraping. The benchmark's 60s scrolling window needs 60 points, not 4.
+  - job_name: vllm-exporter
+    scrape_interval: 1s
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/vllm-exporter.yml
+
+  - job_name: node-exporter
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/node-exporter.yml
+
+  - job_name: dcgm-exporter
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/dcgm-exporter.yml
+
+  - job_name: intel-pcm-exporter
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/intel-pcm-exporter.yml
+
+  - job_name: amd-pcm-exporter
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/amd-pcm-exporter.yml
