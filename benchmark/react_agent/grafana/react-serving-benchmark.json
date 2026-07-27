@@ -24,6 +24,22 @@
   "liveNow": true,
   "panels": [
     {
+      "id": 10,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"height:100%;display:flex;align-items:center;justify-content:center;border-radius:4px;background:linear-gradient(135deg,#1a1a1f 0%,#2a2a32 50%,#1a1a1f 100%);\"><div style=\"text-align:center;\"><div style=\"font-size:28px;font-weight:700;letter-spacing:0.02em;background:linear-gradient(90deg,#dc2626 0%,#f97316 100%);-webkit-background-clip:text;background-clip:text;color:transparent;\">ReAct Serving Benchmark</div><div style=\"font-size:12px;color:#94a3b8;margin-top:4px;letter-spacing:0.08em;text-transform:uppercase;\">MARS vs. LMCache &middot; Mooncake &middot; Recompute</div></div></div>"
+      }
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -56,7 +72,7 @@
         "h": 5,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "id": 1,
       "options": {
@@ -124,7 +140,7 @@
         "h": 5,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 3
       },
       "id": 2,
       "options": {
@@ -245,7 +261,7 @@
         "h": 5,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 8
       },
       "id": 6,
       "options": {
@@ -397,7 +413,7 @@
         "h": 5,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 8
       },
       "id": 7,
       "options": {
@@ -619,7 +635,7 @@
         "h": 11,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 13
       },
       "id": 4,
       "options": {
@@ -840,7 +856,7 @@
         "h": 11,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 13
       },
       "id": 5,
       "options": {
@@ -940,7 +956,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 24
       },
       "id": 3,
       "options": {
@@ -1010,7 +1026,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 29
       },
       "id": 9,
       "options": {
@@ -1057,7 +1073,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 32
       },
       "id": 8,
       "options": {
