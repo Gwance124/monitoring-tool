@@ -279,7 +279,20 @@
       ],
       "title": "Current mean TTFT",
       "type": "bargauge",
-      "transparent": true
+      "transparent": true,
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "mars": 0,
+              "lmcache": 1,
+              "mooncake": 2,
+              "recompute": 3
+            }
+          }
+        }
+      ]
     },
     {
       "fieldConfig": {
@@ -401,7 +414,20 @@
       ],
       "title": "Current mean end-to-end latency",
       "type": "bargauge",
-      "transparent": true
+      "transparent": true,
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "mars": 0,
+              "lmcache": 1,
+              "mooncake": 2,
+              "recompute": 3
+            }
+          }
+        }
+      ]
     },
     {
       "datasource": {
