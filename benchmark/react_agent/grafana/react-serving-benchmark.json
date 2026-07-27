@@ -32,7 +32,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "#dc2626",
+            "fixedColor": "transparent",
             "mode": "fixed"
           },
           "decimals": 1,
@@ -60,9 +60,9 @@
       },
       "id": 1,
       "options": {
-        "colorMode": "none",
-        "graphMode": "area",
-        "justifyMode": "center",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
         "orientation": "horizontal",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
@@ -73,10 +73,10 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "value_and_name",
+        "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "13.0.2",
       "targets": [
         {
           "editorMode": "code",
@@ -100,7 +100,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "#dc2626",
+            "fixedColor": "transparent",
             "mode": "fixed"
           },
           "decimals": 1,
@@ -128,9 +128,9 @@
       },
       "id": 2,
       "options": {
-        "colorMode": "none",
-        "graphMode": "area",
-        "justifyMode": "center",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
         "orientation": "horizontal",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
@@ -141,10 +141,10 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "value_and_name",
+        "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "13.0.2",
       "targets": [
         {
           "editorMode": "code",
@@ -264,9 +264,15 @@
         },
         "showUnfilled": true,
         "sizing": "auto",
-        "valueMode": "color"
+        "valueMode": "color",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        }
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "13.0.2",
       "targets": [
         {
           "editorMode": "code",
@@ -279,20 +285,7 @@
       ],
       "title": "Current mean TTFT",
       "type": "bargauge",
-      "transparent": true,
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "indexByName": {
-              "mars": 0,
-              "lmcache": 1,
-              "mooncake": 2,
-              "recompute": 3
-            }
-          }
-        }
-      ]
+      "transparent": true
     },
     {
       "fieldConfig": {
@@ -399,9 +392,15 @@
         },
         "showUnfilled": true,
         "sizing": "auto",
-        "valueMode": "color"
+        "valueMode": "color",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        }
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "13.0.2",
       "targets": [
         {
           "editorMode": "code",
@@ -414,20 +413,7 @@
       ],
       "title": "Current mean end-to-end latency",
       "type": "bargauge",
-      "transparent": true,
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "indexByName": {
-              "mars": 0,
-              "lmcache": 1,
-              "mooncake": 2,
-              "recompute": 3
-            }
-          }
-        }
-      ]
+      "transparent": true
     },
     {
       "datasource": {
@@ -461,7 +447,6 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "show": "lines",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -469,7 +454,10 @@
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisBorderShow": false,
+            "barWidthFactor": 0.6,
+            "showValues": false
           },
           "decimals": 1,
           "mappings": [],
@@ -516,7 +504,8 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "mars"
+              "options": "MARS",
+              "scope": "series"
             },
             "properties": [
               {
@@ -531,7 +520,8 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "lmcache"
+              "options": "LMCache",
+              "scope": "series"
             },
             "properties": [
               {
@@ -546,7 +536,8 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "mooncake"
+              "options": "Mooncake",
+              "scope": "series"
             },
             "properties": [
               {
@@ -561,7 +552,8 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "recompute"
+              "options": "Recompute",
+              "scope": "series"
             },
             "properties": [
               {
@@ -591,7 +583,8 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "asc"
+          "sort": "asc",
+          "hideZeros": false
         }
       },
       "targets": [
@@ -640,7 +633,8 @@
         }
       ],
       "type": "timeseries",
-      "transparent": true
+      "transparent": true,
+      "pluginVersion": "13.0.2"
     },
     {
       "datasource": {
@@ -674,7 +668,6 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "show": "lines",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -682,7 +675,10 @@
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisBorderShow": false,
+            "barWidthFactor": 0.6,
+            "showValues": false
           },
           "decimals": 1,
           "mappings": [],
@@ -729,7 +725,8 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "mars"
+              "options": "MARS",
+              "scope": "series"
             },
             "properties": [
               {
@@ -744,7 +741,8 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "lmcache"
+              "options": "LMCache",
+              "scope": "series"
             },
             "properties": [
               {
@@ -759,7 +757,8 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "mooncake"
+              "options": "Mooncake",
+              "scope": "series"
             },
             "properties": [
               {
@@ -774,7 +773,8 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "recompute"
+              "options": "Recompute",
+              "scope": "series"
             },
             "properties": [
               {
@@ -804,7 +804,8 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "asc"
+          "sort": "asc",
+          "hideZeros": false
         }
       },
       "targets": [
@@ -853,7 +854,8 @@
         }
       ],
       "type": "timeseries",
-      "transparent": true
+      "transparent": true,
+      "pluginVersion": "13.0.2"
     },
     {
       "datasource": {
@@ -909,7 +911,7 @@
         "textMode": "value_and_name",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "13.0.2",
       "targets": [
         {
           "datasource": {
@@ -979,7 +981,13 @@
         },
         "showUnfilled": true,
         "sizing": "auto",
-        "valueMode": "text"
+        "valueMode": "text",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        }
       },
       "targets": [
         {
@@ -993,7 +1001,8 @@
       ],
       "title": "Normalized test time \u2014 final value 300 seconds",
       "type": "bargauge",
-      "transparent": true
+      "transparent": true,
+      "pluginVersion": "13.0.2"
     },
     {
       "gridPos": {
@@ -1018,7 +1027,7 @@
       "type": "text"
     }
   ],
-  "refresh": "1s",
+  "refresh": "5s",
   "schemaVersion": 39,
   "tags": [
     "react",
