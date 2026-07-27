@@ -6,7 +6,13 @@ matplotlib.use("Agg")
 
 import pytest
 
-from render_video import Dashboard, render
+from render_video import (
+    Dashboard,
+    _interp,
+    _window_interpolated,
+    render,
+    render_split,
+)
 from replay import SYSTEMS, Replay
 
 COLUMNS = ["timestamp", "elapsed_seconds", "system", "ttft_mean_seconds",
@@ -107,6 +113,67 @@ def test_legend_has_no_orphaned_dashed_entry(runs: Path):
     labels = {handle.get_label() for handle in dashboard.figure.legends[0].legend_handles}
     assert "p95" not in labels
     assert "mean" in labels
+
+
+def test_line_y_axis_is_fixed_across_frames(runs: Path):
+    dashboard = Dashboard(Replay.load(runs), window=60)
+    dashboard.draw(at=0)
+    early = dashboard.ttft_axis.get_ylim()
+    dashboard.draw(at=90)
+    late = dashboard.ttft_axis.get_ylim()
+    assert early == late, "y-limits must not reflow as the window scrolls"
+
+
+def test_bar_x_axis_is_fixed_across_frames(runs: Path):
+    dashboard = Dashboard(Replay.load(runs), window=60)
+    dashboard.draw(at=0)
+    early = dashboard.bar_ttft_axis.get_xlim()
+    dashboard.draw(at=90)
+    late = dashboard.bar_ttft_axis.get_xlim()
+    assert early == late, "bar x-limits must not reflow frame to frame"
+
+
+def test_line_edges_track_fractional_time(runs: Path):
+    # A fractional frame must place the line's right edge exactly at `at`, not
+    # snap it to a whole second -- this is what makes scrolling smooth.
+    dashboard = Dashboard(Replay.load(runs), window=60)
+    dashboard.draw(at=90.4)
+    line = dashboard.lines[("ttft", "mars", "mean")]
+    xs = line.get_xdata()
+    assert xs[-1] == pytest.approx(90.4)
+    assert xs[0] == pytest.approx(30.4)
+
+
+def test_interpolation_never_bridges_a_gap():
+    rows = {10: {"m": 1.0}, 12: {"m": 3.0}}  # 11 is missing
+    # Every fractional x here brackets the missing sample at 11, so the value is
+    # undefined -- interpolation must not invent 2.0 to bridge it.
+    assert _interp(rows, "m", 11.5) is None
+    assert _interp(rows, "m", 10.5) is None
+
+
+def test_interpolation_between_present_samples():
+    rows = {10: {"m": 1.0}, 11: {"m": 2.0}}
+    assert _interp(rows, "m", 10.25) == pytest.approx(1.25)
+    assert _interp(rows, "m", 10.0) == pytest.approx(1.0)
+
+
+def test_window_edge_point_dropped_when_edge_falls_in_a_gap(runs: Path):
+    replay = Replay.load(runs)
+    # Punch a hole so the right edge at t=100.5 brackets a missing sample.
+    del replay.series["mars"][100]
+    xs, ys = _window_interpolated(replay, "mars", "ttft_mean_seconds", 100.5, 60)
+    assert xs[-1] < 100.5, "no fabricated point at an edge sitting in a gap"
+
+
+def test_render_split_writes_five_synchronised_videos(runs: Path, tmp_path: Path):
+    out = tmp_path / "split"
+    paths = render_split(Replay.load(runs), out, fps=5, speed=20, window=60)
+    assert len(paths) == 5
+    names = {p.stem for p in paths}
+    assert names == {"ttft-line", "e2e-line", "ttft-bars", "e2e-bars", "headline"}
+    for path in paths:
+        assert path.exists() and path.stat().st_size > 0
 
 
 def test_missing_bar_value_renders_as_no_data_not_zero(runs: Path, tmp_path: Path):
