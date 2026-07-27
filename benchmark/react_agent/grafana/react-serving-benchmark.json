@@ -83,7 +83,8 @@
           "expr": "react_benchmark_ttft_improvement_fraction{second_best=\"recompute\"}",
           "legendFormat": "(Recompute - MARS) / Recompute",
           "range": true,
-          "refId": "A"
+          "refId": "A",
+          "interval": "1s"
         }
       ],
       "title": "MARS performance improvement",
@@ -149,7 +150,8 @@
           "expr": "react_benchmark_e2e_improvement_percent",
           "legendFormat": "MARS lower E2E vs {{second_best}}",
           "range": true,
-          "refId": "A"
+          "refId": "A",
+          "interval": "1s"
         }
       ],
       "title": "End-to-end improvement",
@@ -220,7 +222,8 @@
           "expr": "react_benchmark_elapsed_seconds",
           "legendFormat": "seconds since test start",
           "range": true,
-          "refId": "A"
+          "refId": "A",
+          "interval": "1s"
         }
       ],
       "title": "Replay position",
@@ -239,7 +242,7 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "p95 TTFT (seconds)",
+            "axisLabel": "Mean TTFT (seconds)",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -401,13 +404,14 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "react_benchmark_ttft_p95_seconds",
+          "expr": "react_benchmark_ttft_current_mean_seconds",
           "legendFormat": "{{system}}",
           "range": true,
-          "refId": "A"
+          "refId": "A",
+          "interval": "1s"
         }
       ],
-      "title": "TTFT p95 — elapsed-time overlay",
+      "title": "TTFT mean \u2014 elapsed-time overlay",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -453,7 +457,7 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "p95 E2E latency (seconds)",
+            "axisLabel": "Mean E2E latency (seconds)",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -555,13 +559,14 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "react_benchmark_e2e_p95_seconds",
+          "expr": "react_benchmark_e2e_current_mean_seconds",
           "legendFormat": "{{system}}",
           "range": true,
-          "refId": "A"
+          "refId": "A",
+          "interval": "1s"
         }
       ],
-      "title": "End-to-end p95 — elapsed-time overlay",
+      "title": "End-to-end mean \u2014 elapsed-time overlay",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -647,7 +652,8 @@
           "expr": "react_benchmark_ttft_mean_seconds",
           "legendFormat": "{{system}}",
           "range": true,
-          "refId": "A"
+          "refId": "A",
+          "interval": "1s"
         }
       ],
       "title": "Full-run mean of p95 TTFT",
@@ -706,7 +712,8 @@
           "expr": "react_benchmark_e2e_mean_seconds",
           "legendFormat": "{{system}}",
           "range": true,
-          "refId": "A"
+          "refId": "A",
+          "interval": "1s"
         }
       ],
       "title": "Full-run mean of p95 end-to-end latency",
@@ -771,10 +778,11 @@
           "expr": "react_benchmark_elapsed_seconds",
           "legendFormat": "Replay progress",
           "range": true,
-          "refId": "A"
+          "refId": "A",
+          "interval": "1s"
         }
       ],
-      "title": "Normalized test time — final value 300 seconds",
+      "title": "Normalized test time \u2014 final value 300 seconds",
       "type": "bargauge"
     },
     {
@@ -791,7 +799,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<div class=\"react-rack\"><div class=\"rack-label\">SHARED MEMORY FABRIC</div><div class=\"rack-unit switch\"><b>High-speed network switch</b><span>↕ 200–800 Gb/s links</span></div><div class=\"fabric\">↕&nbsp;&nbsp;&nbsp;↕&nbsp;&nbsp;&nbsp;↕&nbsp;&nbsp;&nbsp;↕</div><div class=\"agents\"><div class=\"rack-unit agent\">🧠 ReAct agent 01</div><div class=\"rack-unit agent\">🧠 ReAct agent 02</div><div class=\"rack-unit agent\">🧠 ReAct agent 03</div><div class=\"rack-unit agent\">🧠 ReAct agent 04</div></div><div class=\"fabric\">↕&nbsp;&nbsp;&nbsp; pooled KV state &nbsp;&nbsp;&nbsp;↕</div><div class=\"rack-unit cxl\"><b>CXL pooled memory</b><span>shared cache and agent state</span></div><div class=\"method\"><b>Fair comparison</b><br>One serving system per run<br>Same workload and duration<br>Overlay by elapsed seconds</div></div><style>.react-rack{height:100%;box-sizing:border-box;padding:16px;border:2px solid #334155;border-radius:10px;background:linear-gradient(180deg,#0f172a,#020617);color:#e2e8f0;font:14px Inter,Arial,sans-serif}.rack-label{text-align:center;color:#67e8f9;font-weight:800;letter-spacing:1.4px;margin:2px 0 14px}.rack-unit{border-radius:8px;padding:12px;margin:7px 0;text-align:center;box-shadow:0 0 14px #0008}.rack-unit span{display:block;color:#cbd5e1;font-size:12px;margin-top:4px}.switch{border:1px solid #60a5fa;background:#172554}.agent{border:1px solid #22d3ee;background:#064e52}.cxl{border:1px solid #a78bfa;background:#312e81}.fabric{text-align:center;color:#38bdf8;font-size:20px;line-height:24px}.method{margin-top:18px;padding:14px;border-top:1px solid #334155;line-height:1.55;color:#cbd5e1}.method b{color:#f8fafc}</style>",
+        "content": "<div class=\"react-rack\"><div class=\"rack-label\">SHARED MEMORY FABRIC</div><div class=\"rack-unit switch\"><b>High-speed network switch</b><span>\u2195 200\u2013800 Gb/s links</span></div><div class=\"fabric\">\u2195&nbsp;&nbsp;&nbsp;\u2195&nbsp;&nbsp;&nbsp;\u2195&nbsp;&nbsp;&nbsp;\u2195</div><div class=\"agents\"><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 01</div><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 02</div><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 03</div><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 04</div></div><div class=\"fabric\">\u2195&nbsp;&nbsp;&nbsp; pooled KV state &nbsp;&nbsp;&nbsp;\u2195</div><div class=\"rack-unit cxl\"><b>CXL pooled memory</b><span>shared cache and agent state</span></div><div class=\"method\"><b>Fair comparison</b><br>One serving system per run<br>Same workload and duration<br>Overlay by elapsed seconds</div></div><style>.react-rack{height:100%;box-sizing:border-box;padding:16px;border:2px solid #334155;border-radius:10px;background:linear-gradient(180deg,#0f172a,#020617);color:#e2e8f0;font:14px Inter,Arial,sans-serif}.rack-label{text-align:center;color:#67e8f9;font-weight:800;letter-spacing:1.4px;margin:2px 0 14px}.rack-unit{border-radius:8px;padding:12px;margin:7px 0;text-align:center;box-shadow:0 0 14px #0008}.rack-unit span{display:block;color:#cbd5e1;font-size:12px;margin-top:4px}.switch{border:1px solid #60a5fa;background:#172554}.agent{border:1px solid #22d3ee;background:#064e52}.cxl{border:1px solid #a78bfa;background:#312e81}.fabric{text-align:center;color:#38bdf8;font-size:20px;line-height:24px}.method{margin-top:18px;padding:14px;border-top:1px solid #334155;line-height:1.55;color:#cbd5e1}.method b{color:#f8fafc}</style>",
         "mode": "html"
       },
       "pluginVersion": "11.2.0",

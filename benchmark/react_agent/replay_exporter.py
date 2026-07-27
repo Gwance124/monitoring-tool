@@ -60,6 +60,11 @@ def load_runs() -> dict[str, list[dict[str, float | None]]]:
                         "elapsed": float(row["elapsed_seconds"]),
                         "ttft": _optional_float(row["ttft_p95_seconds"]),
                         "e2e": _optional_float(row["e2e_p95_seconds"]),
+                        # The exact mean (rate(_sum)/rate(_count)), unlike p95
+                        # this is never bucket-quantized -- see README's note
+                        # on why p95 is captured but never plotted.
+                        "ttft_mean": _optional_float(row["ttft_mean_seconds"]),
+                        "e2e_mean": _optional_float(row["e2e_mean_seconds"]),
                     }
                 )
         if not rows:
@@ -120,6 +125,12 @@ def render_metrics() -> str:
         "# TYPE react_benchmark_ttft_p95_seconds gauge",
         "# HELP react_benchmark_e2e_p95_seconds Replayed p95 end-to-end latency.",
         "# TYPE react_benchmark_e2e_p95_seconds gauge",
+        "# HELP react_benchmark_ttft_current_mean_seconds Replayed exact mean "
+        "TTFT at this instant (rate(_sum)/rate(_count), not bucket-quantized).",
+        "# TYPE react_benchmark_ttft_current_mean_seconds gauge",
+        "# HELP react_benchmark_e2e_current_mean_seconds Replayed exact mean "
+        "end-to-end latency at this instant.",
+        "# TYPE react_benchmark_e2e_current_mean_seconds gauge",
         "# HELP react_benchmark_ttft_mean_seconds Mean p95 TTFT over the saved run.",
         "# TYPE react_benchmark_ttft_mean_seconds gauge",
         "# HELP react_benchmark_e2e_mean_seconds Mean p95 E2E over the saved run.",
@@ -138,6 +149,14 @@ def render_metrics() -> str:
         if point["e2e"] is not None:
             lines.append(
                 f"react_benchmark_e2e_p95_seconds{{{labels}}} {point['e2e']:.6f}"
+            )
+        if point["ttft_mean"] is not None:
+            lines.append(
+                f"react_benchmark_ttft_current_mean_seconds{{{labels}}} {point['ttft_mean']:.6f}"
+            )
+        if point["e2e_mean"] is not None:
+            lines.append(
+                f"react_benchmark_e2e_current_mean_seconds{{{labels}}} {point['e2e_mean']:.6f}"
             )
         lines.append(
             f"react_benchmark_ttft_mean_seconds{{{labels}}} "

@@ -25,10 +25,11 @@ def _write_runs(runs_dir: Path, gap_system: str | None, gap_elapsed: int | None)
                     "timestamp": 1000 + elapsed,
                     "elapsed_seconds": elapsed,
                     "system": system,
-                    "ttft_mean_seconds": base,
-                    "e2e_mean_seconds": base * 3,
-                    # A missing scrape empties these cells -- exactly what
-                    # extract_run.py writes for a genuine gap, never a 0.
+                    # A missing scrape empties every derived metric's cell for
+                    # that instant -- exactly what extract_run.py writes for a
+                    # genuine gap, never a 0.
+                    "ttft_mean_seconds": "" if is_gap else base,
+                    "e2e_mean_seconds": "" if is_gap else base * 3,
                     "ttft_p95_seconds": "" if is_gap else base * 2.5,
                     "e2e_p95_seconds": "" if is_gap else base * 7,
                     "requests_completed": 100,
@@ -56,6 +57,39 @@ def load_exporter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         return replay_exporter
 
     return _load
+
+
+def test_current_mean_metric_is_exposed_separately_from_p95(load_exporter):
+    exporter = load_exporter()
+    exporter.PAUSED = True
+    exporter.PAUSED_ELAPSED = 3.0
+
+    output = exporter.render_metrics()
+
+    assert "react_benchmark_ttft_current_mean_seconds" in output
+    assert "react_benchmark_e2e_current_mean_seconds" in output
+    mars_mean_line = next(
+        line for line in output.splitlines()
+        if line.startswith("react_benchmark_ttft_current_mean_seconds{")
+        and 'system="mars"' in line
+    )
+    # base=0.86 -> ttft_mean_seconds column, not the p95 column (0.86*2.5=2.15).
+    assert " 0.860000" in mars_mean_line
+
+
+def test_current_mean_omitted_on_a_gap(load_exporter):
+    exporter = load_exporter(gap_system="mars", gap_elapsed=5)
+    exporter.PAUSED = True
+    exporter.PAUSED_ELAPSED = 5.0
+
+    output = exporter.render_metrics()
+
+    mars_mean_lines = [
+        line for line in output.splitlines()
+        if line.startswith("react_benchmark_ttft_current_mean_seconds{")
+        and 'system="mars"' in line
+    ]
+    assert mars_mean_lines == []
 
 
 def test_render_metrics_survives_a_scrape_gap(load_exporter):
