@@ -21,10 +21,10 @@ SPEED = float(os.getenv("BENCHMARK_REPLAY_SPEED", "1"))
 LOOP = os.getenv("BENCHMARK_REPLAY_LOOP", "false").lower() in ("1", "true", "yes")
 PORT = int(os.getenv("BENCHMARK_REPLAY_PORT", "9108"))
 COLORS = {
-    "mars": "14b8a6",
-    "recompute": "2563eb",
-    "mooncake": "8b5cf6",
-    "lmcache": "f59e0b",
+    "mars": "dc2626",
+    "lmcache": "2563eb",
+    "mooncake": "7c3aed",
+    "recompute": "64748b",
 }
 
 

@@ -32,7 +32,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "green",
+            "fixedColor": "#dc2626",
             "mode": "fixed"
           },
           "decimals": 1,
@@ -100,7 +100,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "semi-dark-green",
+            "fixedColor": "#dc2626",
             "mode": "fixed"
           },
           "decimals": 1,
@@ -188,37 +188,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#14b8a6",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "recompute"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#2563eb",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "mooncake"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#8b5cf6",
+                  "fixedColor": "#dc2626",
                   "mode": "fixed"
                 }
               }
@@ -233,7 +203,37 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#f59e0b",
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mooncake"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "recompute"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
                   "mode": "fixed"
                 }
               }
@@ -310,37 +310,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#14b8a6",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "recompute"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#2563eb",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "mooncake"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#8b5cf6",
+                  "fixedColor": "#dc2626",
                   "mode": "fixed"
                 }
               }
@@ -355,7 +325,37 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#f59e0b",
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mooncake"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "recompute"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
                   "mode": "fixed"
                 }
               }
@@ -496,7 +496,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#14b8a6",
+                  "fixedColor": "#dc2626",
                   "mode": "fixed"
                 }
               }
@@ -505,7 +505,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "recompute"
+              "options": "lmcache"
             },
             "properties": [
               {
@@ -526,7 +526,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#8b5cf6",
+                  "fixedColor": "#7c3aed",
                   "mode": "fixed"
                 }
               }
@@ -535,13 +535,13 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "lmcache"
+              "options": "recompute"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#f59e0b",
+                  "fixedColor": "#64748b",
                   "mode": "fixed"
                 }
               }
@@ -712,7 +712,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#14b8a6",
+                  "fixedColor": "#dc2626",
                   "mode": "fixed"
                 }
               }
@@ -721,7 +721,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "recompute"
+              "options": "lmcache"
             },
             "properties": [
               {
@@ -742,7 +742,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#8b5cf6",
+                  "fixedColor": "#7c3aed",
                   "mode": "fixed"
                 }
               }
@@ -751,13 +751,13 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "lmcache"
+              "options": "recompute"
             },
             "properties": [
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#f59e0b",
+                  "fixedColor": "#64748b",
                   "mode": "fixed"
                 }
               }
