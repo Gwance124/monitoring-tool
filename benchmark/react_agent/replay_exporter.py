@@ -44,7 +44,12 @@ def selected_paths() -> dict[str, pathlib.Path]:
     return result
 
 
-def load_runs() -> dict[str, list[dict[str, float]]]:
+def _optional_float(value: str) -> float | None:
+    """An empty cell marks a genuine scrape gap, not zero -- keep it as None."""
+    return None if value == "" else float(value)
+
+
+def load_runs() -> dict[str, list[dict[str, float | None]]]:
     runs = {}
     for system, path in selected_paths().items():
         rows = []
@@ -53,8 +58,8 @@ def load_runs() -> dict[str, list[dict[str, float]]]:
                 rows.append(
                     {
                         "elapsed": float(row["elapsed_seconds"]),
-                        "ttft": float(row["ttft_p95_seconds"]),
-                        "e2e": float(row["e2e_p95_seconds"]),
+                        "ttft": _optional_float(row["ttft_p95_seconds"]),
+                        "e2e": _optional_float(row["e2e_p95_seconds"]),
                     }
                 )
         if not rows:
@@ -77,7 +82,10 @@ def nearest(rows: list[dict[str, float]], elapsed: float) -> dict[str, float]:
 
 
 def mean_metric(system: str, metric: str) -> float:
-    values = [row[metric] for row in RUNS[system] if math.isfinite(row[metric])]
+    values = [
+        row[metric] for row in RUNS[system]
+        if row[metric] is not None and math.isfinite(row[metric])
+    ]
     return statistics.fmean(values)
 
 
@@ -120,12 +128,17 @@ def render_metrics() -> str:
     for system in SYSTEMS:
         point = nearest(RUNS[system], elapsed)
         labels = f'system="{system}",color="{COLORS[system]}"'
-        lines.append(
-            f"react_benchmark_ttft_p95_seconds{{{labels}}} {point['ttft']:.6f}"
-        )
-        lines.append(
-            f"react_benchmark_e2e_p95_seconds{{{labels}}} {point['e2e']:.6f}"
-        )
+        # A None here is a genuine scrape gap in the source run -- omit the
+        # sample for this instant rather than fabricate a value, exactly as
+        # the CSV itself never fills one in.
+        if point["ttft"] is not None:
+            lines.append(
+                f"react_benchmark_ttft_p95_seconds{{{labels}}} {point['ttft']:.6f}"
+            )
+        if point["e2e"] is not None:
+            lines.append(
+                f"react_benchmark_e2e_p95_seconds{{{labels}}} {point['e2e']:.6f}"
+            )
         lines.append(
             f"react_benchmark_ttft_mean_seconds{{{labels}}} "
             f"{mean_metric(system, 'ttft'):.6f}"
@@ -139,11 +152,6 @@ def render_metrics() -> str:
         competitor, value = second_best(metric)
         mars_value = mean_metric("mars", metric)
         improvement = 100.0 * (value - mars_value) / value
-        mars_current = nearest(RUNS["mars"], elapsed)[metric]
-        competitor_current = nearest(RUNS[competitor], elapsed)[metric]
-        improvement_fraction = (
-            (competitor_current - mars_current) / competitor_current
-        )
         lines.extend(
             [
                 f"# HELP react_benchmark_{metric}_improvement_percent "
@@ -151,14 +159,27 @@ def render_metrics() -> str:
                 f"# TYPE react_benchmark_{metric}_improvement_percent gauge",
                 f'react_benchmark_{metric}_improvement_percent'
                 f'{{second_best="{competitor}"}} {improvement:.6f}',
-                f"# HELP react_benchmark_{metric}_improvement_fraction "
-                f"Current MARS latency reduction fraction: "
-                f"(second_best - MARS) / second_best.",
-                f"# TYPE react_benchmark_{metric}_improvement_fraction gauge",
-                f'react_benchmark_{metric}_improvement_fraction'
-                f'{{second_best="{competitor}"}} {improvement_fraction:.8f}',
             ]
         )
+
+        mars_current = nearest(RUNS["mars"], elapsed)[metric]
+        competitor_current = nearest(RUNS[competitor], elapsed)[metric]
+        # Both sides of this instant's ratio can be a genuine scrape gap;
+        # omit the sample rather than fabricate a fraction from missing data.
+        if mars_current is not None and competitor_current is not None:
+            improvement_fraction = (
+                (competitor_current - mars_current) / competitor_current
+            )
+            lines.extend(
+                [
+                    f"# HELP react_benchmark_{metric}_improvement_fraction "
+                    f"Current MARS latency reduction fraction: "
+                    f"(second_best - MARS) / second_best.",
+                    f"# TYPE react_benchmark_{metric}_improvement_fraction gauge",
+                    f'react_benchmark_{metric}_improvement_fraction'
+                    f'{{second_best="{competitor}"}} {improvement_fraction:.8f}',
+                ]
+            )
     return "\n".join(lines) + "\n"
 
 
