@@ -291,10 +291,10 @@
           "id": "organize",
           "options": {
             "indexByName": {
-              "mars": 0,
-              "lmcache": 1,
-              "mooncake": 2,
-              "recompute": 3
+              "recompute": 0,
+              "mooncake": 1,
+              "lmcache": 2,
+              "mars": 3
             }
           }
         }
@@ -432,10 +432,10 @@
           "id": "organize",
           "options": {
             "indexByName": {
-              "mars": 0,
-              "lmcache": 1,
-              "mooncake": 2,
-              "recompute": 3
+              "recompute": 0,
+              "mooncake": 1,
+              "lmcache": 2,
+              "mars": 3
             }
           }
         }
