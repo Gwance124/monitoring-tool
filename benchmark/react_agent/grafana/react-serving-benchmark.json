@@ -288,14 +288,15 @@
       "transparent": true,
       "transformations": [
         {
-          "id": "organize",
+          "id": "sortBy",
           "options": {
-            "indexByName": {
-              "recompute": 0,
-              "mooncake": 1,
-              "lmcache": 2,
-              "mars": 3
-            }
+            "fields": {},
+            "sort": [
+              {
+                "field": "Value",
+                "desc": false
+              }
+            ]
           }
         }
       ]
@@ -429,14 +430,15 @@
       "transparent": true,
       "transformations": [
         {
-          "id": "organize",
+          "id": "sortBy",
           "options": {
-            "indexByName": {
-              "recompute": 0,
-              "mooncake": 1,
-              "lmcache": 2,
-              "mars": 3
-            }
+            "fields": {},
+            "sort": [
+              {
+                "field": "Value",
+                "desc": false
+              }
+            ]
           }
         }
       ]
