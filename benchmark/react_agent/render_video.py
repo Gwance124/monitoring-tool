@@ -148,16 +148,6 @@ def _style_line_axis(axis, title: str) -> None:
         spine.set_color(GRID)
 
 
-def _style_bar_axis(axis, title: str) -> None:
-    axis.clear()
-    axis.set_facecolor(PANEL)
-    axis.set_title(title, color=INK, fontsize=15, fontweight="bold", loc="left", pad=10)
-    axis.tick_params(colors=INK_MUTED, labelsize=12, left=False)
-    axis.get_xaxis().set_visible(False)
-    for spine in axis.spines.values():
-        spine.set_visible(False)
-
-
 class LinePanel:
     """One scrolling line panel (mean only), drawn on a supplied axis."""
 
@@ -193,7 +183,13 @@ class LinePanel:
 
 
 class BarPanel:
-    """One 'current value' horizontal bar panel, drawn on a supplied axis."""
+    """One 'current value' horizontal bar panel, drawn on a supplied axis.
+
+    All artists (bars, tick labels, value text) are created once here and
+    mutated in place by ``draw()``. The previous implementation called
+    ``axis.clear()`` every frame and rebuilt everything from scratch, which is
+    far more expensive than updating a handful of existing artists.
+    """
 
     def __init__(
         self, replay: Replay, axis, metric: str, title: str, span: float | None = None
@@ -205,35 +201,43 @@ class BarPanel:
         # Fixed x-range for the whole run so bar geometry and the value labels
         # do not jitter frame to frame.
         self.span = span if span is not None else _metric_max(replay, metric)
+        span = self.span if self.span > 0 else 1.0
+        self.no_data_stub = span * 0.03
+
+        axis.set_facecolor(PANEL)
+        axis.set_title(title, color=INK, fontsize=15, fontweight="bold", loc="left", pad=10)
+        axis.tick_params(colors=INK_MUTED, labelsize=12, left=False)
+        axis.get_xaxis().set_visible(False)
+        for spine in axis.spines.values():
+            spine.set_visible(False)
+        axis.set_xlim(0, span * 1.28)
+
+        self.systems = list(reversed(SYSTEMS))
+        positions = list(range(len(self.systems)))
+        axis.set_yticks(positions)
+        axis.set_yticklabels([LABELS[system] for system in self.systems],
+                             color=INK_MUTED, fontsize=13)
+
+        self.bars = axis.barh(positions, [self.no_data_stub] * len(positions),
+                              color=GRID, height=0.62, zorder=3)
+        self.value_texts = [
+            axis.text(self.no_data_stub + span * 0.03, position, "",
+                      va="center", color=INK_MUTED, fontsize=13, fontweight="bold")
+            for position in positions
+        ]
 
     def draw(self, at: float) -> None:
-        axis = self.axis
-        _style_bar_axis(axis, self.title)
         span = self.span if self.span > 0 else 1.0
-
-        values, labels, colours = [], [], []
-        for system in reversed(SYSTEMS):
-            values.append(self.replay.value_at(system, self.metric, round(at)))
-            labels.append(LABELS[system])
-            colours.append(COLORS[system])
-
-        positions = range(len(values))
-        # Missing values get a short muted stub, not a fabricated 0.0 bar -- a
-        # real near-zero measurement must stay visually distinct from a gap.
-        no_data_stub = span * 0.03
-        bar_lengths = [no_data_stub if value is None else value for value in values]
-        bar_colours = [
-            GRID if value is None else colour for value, colour in zip(values, colours)
-        ]
-        axis.barh(list(positions), bar_lengths, color=bar_colours, height=0.62, zorder=3)
-        axis.set_yticks(list(positions))
-        axis.set_yticklabels(labels, color=INK_MUTED, fontsize=13)
-        axis.set_xlim(0, span * 1.28)
-        for position, value, length in zip(positions, values, bar_lengths):
-            label = "—" if value is None else f"{value:.2f}s"
-            colour = INK_MUTED if value is None else INK
-            axis.text(length + span * 0.03, position, label,
-                      va="center", color=colour, fontsize=13, fontweight="bold")
+        for system, bar, text in zip(self.systems, self.bars, self.value_texts):
+            value = self.replay.value_at(system, self.metric, round(at))
+            # Missing values get a short muted stub, not a fabricated 0.0 bar --
+            # a real near-zero measurement must stay visually distinct from a gap.
+            length = self.no_data_stub if value is None else value
+            bar.set_width(length)
+            bar.set_color(GRID if value is None else COLORS[system])
+            text.set_x(length + span * 0.03)
+            text.set_text("—" if value is None else f"{value:.2f}s")
+            text.set_color(INK_MUTED if value is None else INK)
 
 
 class HeadlinePanel:
