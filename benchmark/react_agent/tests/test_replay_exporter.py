@@ -135,6 +135,54 @@ def test_mean_metric_skips_gap_rows(load_exporter):
     assert exporter.mean_metric("mars", "ttft") == pytest.approx(0.86 * 2.5)
 
 
+def test_improvement_is_computed_from_mean_not_p95(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    # p95 is deliberately near-identical across systems here while the means
+    # differ a lot -- if the exporter still sourced improvement from p95 (the
+    # bug being fixed), this would report roughly 0%, not ~28.6%.
+    means = {"mars": 1.0, "lmcache": 1.4, "mooncake": 2.0, "recompute": 2.5}
+    p95s = {"mars": 5.0, "lmcache": 5.05, "mooncake": 5.1, "recompute": 5.2}
+    for system, mean in means.items():
+        directory = tmp_path / system
+        directory.mkdir(parents=True)
+        with (directory / "run.csv").open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=COLUMNS)
+            writer.writeheader()
+            for elapsed in range(0, 5):
+                writer.writerow({
+                    "timestamp": 1000 + elapsed,
+                    "elapsed_seconds": elapsed,
+                    "system": system,
+                    "ttft_mean_seconds": mean,
+                    "e2e_mean_seconds": mean,
+                    "ttft_p95_seconds": p95s[system],
+                    "e2e_p95_seconds": p95s[system],
+                    "requests_completed": 100,
+                    "queue_p95_seconds": mean * 0.4,
+                    "prefill_p95_seconds": mean * 1.2,
+                    "ext_cache_hit_ratio": "" if system == "recompute" else 0.7,
+                    "prompt_tokens_recomputed": 5000,
+                })
+
+    monkeypatch.setenv("BENCHMARK_RUNS_DIR", str(tmp_path))
+    monkeypatch.setenv("BENCHMARK_RUN_SELECTION", "")
+    monkeypatch.setenv("BENCHMARK_REPLAY_LOOP", "false")
+    import replay_exporter
+    importlib.reload(replay_exporter)
+    replay_exporter.PAUSED = True
+    replay_exporter.PAUSED_ELAPSED = 2.0
+
+    output = replay_exporter.render_metrics()
+
+    fraction_line = next(
+        line for line in output.splitlines()
+        if line.startswith("react_benchmark_ttft_improvement_fraction{")
+    )
+    assert 'second_best="lmcache"' in fraction_line
+    # (1.4 - 1.0) / 1.4 = 0.2857...
+    value = float(fraction_line.rsplit(" ", 1)[-1])
+    assert value == pytest.approx((1.4 - 1.0) / 1.4, abs=1e-4)
+
+
 def test_improvement_fraction_omitted_when_either_side_is_a_gap(load_exporter):
     exporter = load_exporter(gap_system="mars", gap_elapsed=5)
     exporter.PAUSED = True

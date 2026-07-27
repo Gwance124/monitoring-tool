@@ -167,9 +167,14 @@ def render_metrics() -> str:
             f"{mean_metric(system, 'e2e'):.6f}"
         )
 
-    for metric in ("ttft", "e2e"):
-        competitor, value = second_best(metric)
-        mars_value = mean_metric("mars", metric)
+    for metric, mean_key in (("ttft", "ttft_mean"), ("e2e", "e2e_mean")):
+        # Ranked and computed on the exact mean, not p95 -- these metric
+        # names are unchanged for API stability, but the source column
+        # underneath now matches what react_benchmark_*_current_mean_seconds
+        # and the bar gauges display, so "MARS is N% better" agrees with the
+        # numbers actually on screen instead of a bucket-quantized p95.
+        competitor, value = second_best(mean_key)
+        mars_value = mean_metric("mars", mean_key)
         improvement = 100.0 * (value - mars_value) / value
         lines.extend(
             [
@@ -181,8 +186,8 @@ def render_metrics() -> str:
             ]
         )
 
-        mars_current = nearest(RUNS["mars"], elapsed)[metric]
-        competitor_current = nearest(RUNS[competitor], elapsed)[metric]
+        mars_current = nearest(RUNS["mars"], elapsed)[mean_key]
+        competitor_current = nearest(RUNS[competitor], elapsed)[mean_key]
         # Both sides of this instant's ratio can be a genuine scrape gap;
         # omit the sample rather than fabricate a fraction from missing data.
         if mars_current is not None and competitor_current is not None:
