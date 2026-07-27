@@ -276,30 +276,40 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "react_benchmark_ttft_current_mean_seconds",
+          "expr": "react_benchmark_ttft_current_mean_seconds{system=\"mars\"}",
           "legendFormat": "{{system}}",
           "range": true,
           "refId": "A",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds{system=\"lmcache\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "B",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds{system=\"mooncake\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "C",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds{system=\"recompute\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "D",
           "interval": "1s"
         }
       ],
       "title": "Current mean TTFT",
       "type": "bargauge",
-      "transparent": true,
-      "transformations": [
-        {
-          "id": "sortBy",
-          "options": {
-            "fields": {},
-            "sort": [
-              {
-                "field": "Value",
-                "desc": false
-              }
-            ]
-          }
-        }
-      ]
+      "transparent": true
     },
     {
       "fieldConfig": {
@@ -418,30 +428,40 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "react_benchmark_e2e_current_mean_seconds",
+          "expr": "react_benchmark_e2e_current_mean_seconds{system=\"mars\"}",
           "legendFormat": "{{system}}",
           "range": true,
           "refId": "A",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_current_mean_seconds{system=\"lmcache\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "B",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_current_mean_seconds{system=\"mooncake\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "C",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_current_mean_seconds{system=\"recompute\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "D",
           "interval": "1s"
         }
       ],
       "title": "Current mean end-to-end latency",
       "type": "bargauge",
-      "transparent": true,
-      "transformations": [
-        {
-          "id": "sortBy",
-          "options": {
-            "fields": {},
-            "sort": [
-              {
-                "field": "Value",
-                "desc": false
-              }
-            ]
-          }
-        }
-      ]
+      "transparent": true
     },
     {
       "datasource": {
