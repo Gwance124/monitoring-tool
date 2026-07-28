@@ -362,8 +362,12 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
   svg.replaceChildren();
   legend.replaceChildren();
 
-  const width = 760;
-  const height = 300;
+  const container = svg.parentElement;
+  const rect = container ? container.getBoundingClientRect() : null;
+  const width = rect && rect.width > 100 ? Math.round(rect.width) : 760;
+  const height = rect && rect.height > 100 ? Math.round(rect.height) : 300;
+
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
   const margin = {
     top: 12,
@@ -444,12 +448,10 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
 
   svg.appendChild(defs);
 
-  const horizontalTicks = 5;
+  const tickStep = yMaximum <= 2 ? 0.5 : yMaximum <= 5 ? 1 : Math.ceil(yMaximum / 5);
 
-  for (let index = 0; index <= horizontalTicks; index += 1) {
-    const fraction = index / horizontalTicks;
-    const value = yMaximum * (1 - fraction);
-    const y = margin.top + fraction * plotHeight;
+  for (let value = 0; value <= yMaximum; value = +(value + tickStep).toFixed(2)) {
+    const y = yScale(value);
 
     const gridLine = svgElement("line", {
       x1: margin.left,
@@ -468,7 +470,7 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
       "font-size": 10,
     });
 
-    label.textContent = `${value.toFixed(value < 10 ? 1 : 0)} s`;
+    label.textContent = `${value % 1 === 0 ? value.toFixed(0) : value.toFixed(1)} s`;
 
     svg.append(gridLine, label);
   }
