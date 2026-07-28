@@ -340,10 +340,20 @@ function niceMaximum(value) {
 
   if (normalized <= 1) {
     rounded = 1;
+  } else if (normalized <= 1.5) {
+    rounded = 1.5;
   } else if (normalized <= 2) {
     rounded = 2;
+  } else if (normalized <= 3) {
+    rounded = 3;
+  } else if (normalized <= 4) {
+    rounded = 4;
   } else if (normalized <= 5) {
     rounded = 5;
+  } else if (normalized <= 6) {
+    rounded = 6;
+  } else if (normalized <= 8) {
+    rounded = 8;
   } else {
     rounded = 10;
   }
@@ -448,7 +458,20 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
 
   svg.appendChild(defs);
 
-  const tickStep = yMaximum <= 2 ? 0.5 : yMaximum <= 5 ? 1 : Math.ceil(yMaximum / 5);
+  function niceTickStep(max) {
+    if (max <= 3) return 0.5;
+    if (max <= 8) return 1;
+    const raw = max / 6;
+    const exp = Math.floor(Math.log10(raw));
+    const mag = 10 ** exp;
+    const norm = raw / mag;
+    if (norm <= 1) return mag;
+    if (norm <= 2) return 2 * mag;
+    if (norm <= 5) return 5 * mag;
+    return 10 * mag;
+  }
+
+  const tickStep = niceTickStep(yMaximum);
 
   for (let value = 0; value <= yMaximum; value = +(value + tickStep).toFixed(2)) {
     const y = yScale(value);
