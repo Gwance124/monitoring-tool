@@ -122,11 +122,46 @@ genuinely undefined value, not a missing zero: either a scrape gap, or (for
 `recompute` has no external KV cache to query. Treating either as `0` fabricates
 a data point that was never measured.
 
-## Grafana
+## Grafana live dashboard
 
-`replay_exporter.py` and `grafana/react-serving-benchmark.json` still work for
-interactive viewing over an SSH tunnel. They are no longer the video path; the
-renderer is headless and needs no browser.
+The Grafana dashboard is a self-contained presentation panel built with the
+[HTML Graphics](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/)
+plugin. It reads Prometheus data directly (no iframes) and renders bar charts,
+time-series plots, and improvement percentages in a single full-screen view.
+
+### File structure
+
+    grafana/
+      hero-panel/
+        panel.html          # markup
+        panel.css           # styles
+        panel.js            # chart rendering (onRender callback)
+      dashboard-template.json.tmpl   # dashboard JSON with placeholders
+      build-dashboard.py             # injects html/css/js into the template
+      react-serving-benchmark.json   # generated output (do not edit directly)
+
+### Making changes
+
+Edit the files under `grafana/hero-panel/`, then rebuild:
+
+    python3 grafana/build-dashboard.py
+
+This writes `grafana/react-serving-benchmark.json`. Grafana's file provisioner
+picks up changes within its `updateIntervalSeconds` (default 30s), or
+immediately on container restart.
+
+Use `--check` to verify the output is up to date without writing (useful in CI):
+
+    python3 grafana/build-dashboard.py --check
+
+### Viewing the presentation
+
+Start the stack with `docker compose up`, then open in a browser:
+
+    http://localhost:3000/d/react-serving-benchmark/react-serving-benchmark-comparison?orgId=1&from=now-5m&to=now&timezone=browser&refresh=5s&_dash.hideTimePicker=true&kiosk=true
+
+Press **F11** (or your browser's fullscreen shortcut) for a clean, chrome-free
+presentation view. The dashboard auto-refreshes every 5 seconds.
 
 ## Tests
 
