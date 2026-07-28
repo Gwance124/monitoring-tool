@@ -1,0 +1,32 @@
+/* Hide "Powered by Grafana" footer on solo/embedded panels */
+.css-1jrggg2,          /* Grafana 11+ footer wrapper */
+.css-14sltgn,          /* alternative footer class */
+footer,
+[class*="Footer"],
+[class*="footer"] {
+  display: none !important;
+}
+
+/* Make solo panel backgrounds transparent */
+body.app-grafana {
+  background: transparent !important;
+}
+
+.react-grid-layout,
+.panel-solo,
+.main-view,
+.scroll-canvas,
+.page-scrollbar-content,
+[class*="page-body"],
+[class*="canvas-"],
+[class*="panelChrome"] {
+  background: transparent !important;
+}
+
+/* Remove panel container border/shadow in solo mode */
+[class*="panel-container"],
+[class*="panelChrome"] {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
