@@ -33,9 +33,6 @@ the gap between completions, and re-run extraction.
           |  extract_run.py queries query_range, any time afterwards
           v
     runs/<system>/<run-id>.csv  +  .json manifest
-          |
-          v
-    render_video.py  ->  outputs/react-serving-replay.mp4
 
 `extract_run.py` never contacts the GPU host. By extraction time that machine can
 be powered off or running something else entirely.
@@ -96,12 +93,6 @@ deterministic from the generator) -- generate them first, from
       python3 extract_run.py --system "$s" --source fixture \
         --fixture "fixtures/$s" --target solab-x3
     done
-    python3 render_video.py --output ../../outputs/react-serving-replay.mp4
-
-If `ffmpeg` is missing or fails at render time (a broken system install, not a
-project bug), `render_video.py` falls back to an animated GIF at the same path
-with a `.gif` extension instead of `.mp4`, and prints which one it wrote. Check
-the printed path, not just the exit code, to know which you got.
 
 ## What is measured
 
