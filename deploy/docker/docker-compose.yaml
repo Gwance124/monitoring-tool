@@ -13,7 +13,6 @@ services:
   grafana:
     image: ${GRAFANA_IMAGE:-grafana/grafana:latest}
     container_name: grafana
-    entrypoint: ["/custom-entrypoint.sh"]
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
     volumes:
@@ -21,7 +20,7 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ../../dashboards:/var/lib/grafana/dashboards:ro
       - ./grafana/custom.css:/usr/share/grafana/public/build/custom.css:ro
-      - ./grafana/entrypoint.sh:/custom-entrypoint.sh:ro
+      - ./grafana/index.html:/usr/share/grafana/public/views/index.html:ro
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
