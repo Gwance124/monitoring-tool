@@ -1,1460 +1,1121 @@
 {
-  "apiVersion": "dashboard.grafana.app/v2",
-  "kind": "Dashboard",
-  "metadata": {
-    "name": "react-serving-benchmark",
-    "namespace": "default",
-    "uid": "fa2b8965-3406-473d-8346-bd69b52c90eb",
-    "resourceVersion": "1785189193653005",
-    "generation": 7,
-    "creationTimestamp": "2026-07-27T20:13:14Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "1172294884155392"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "access-policy:service",
-      "grafana.app/folder": "cftel147hwhz4b",
-      "grafana.app/managedBy": "classic-file-provisioning",
-      "grafana.app/managerId": "ReAct AI Agent Serving",
-      "grafana.app/sourceChecksum": "9e4d3303a167ba6a4cbc49a3456bac6a",
-      "grafana.app/sourcePath": "/var/lib/grafana/react-benchmark/react-serving-benchmark.json",
-      "grafana.app/sourceTimestamp": "1785189188000",
-      "grafana.app/updatedBy": "access-policy:service",
-      "grafana.app/updatedTimestamp": "2026-07-27T21:53:13Z",
-      "grafana.app/folderTitle": "ReAct AI Agent Serving",
-      "grafana.app/folderUrl": "/dashboards/f/cftel147hwhz4b/react-ai-agent-serving"
-    }
-  },
-  "spec": {
-    "annotations": [
+  "annotations": {
+    "list": [
       {
-        "kind": "AnnotationQuery",
-        "spec": {
-          "builtIn": true,
-          "enable": true,
-          "hide": true,
-          "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts",
-          "query": {
-            "datasource": {
-              "name": "-- Grafana --"
-            },
-            "group": "grafana",
-            "kind": "DataQuery",
-            "spec": {},
-            "version": "v0"
-          }
-        }
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
       }
-    ],
-    "cursorSync": "Crosshair",
-    "description": "Elapsed-time overlay of isolated ReAct serving benchmark runs. Saved CSV runs are replayed in lock-step through Prometheus.",
-    "editable": true,
-    "elements": {
-      "panel-1": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "datasource": {
-                        "name": "prometheus"
-                      },
-                      "group": "prometheus",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "react_benchmark_ttft_improvement_fraction",
-                        "interval": "1s",
-                        "legendFormat": "({{second_best}} - MARS) / {{second_best}}",
-                        "range": true
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": []
-            }
-          },
-          "description": "Live fraction: (second-best non-MARS TTFT - MARS TTFT) / second-best non-MARS TTFT.",
-          "id": 1,
-          "links": [],
-          "title": "MARS performance improvement",
-          "transparent": true,
-          "vizConfig": {
-            "group": "stat",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "fixedColor": "transparent",
-                    "mode": "fixed"
-                  },
-                  "decimals": 1,
-                  "max": 1,
-                  "min": 0,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  },
-                  "unit": "percentunit"
-                },
-                "overrides": []
-              },
-              "options": {
-                "colorMode": "background",
-                "graphMode": "none",
-                "justifyMode": "auto",
-                "orientation": "horizontal",
-                "percentChangeColorMode": "standard",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showPercentChange": false,
-                "textMode": "auto",
-                "wideLayout": true
-              }
-            },
-            "version": "13.0.2"
-          }
-        }
+    ]
+  },
+  "description": "Elapsed-time overlay of isolated ReAct serving benchmark runs. Saved CSV runs are replayed in lock-step through Prometheus.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
       },
-      "panel-2": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "datasource": {
-                        "name": "prometheus"
-                      },
-                      "group": "prometheus",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "react_benchmark_e2e_improvement_fraction",
-                        "interval": "1s",
-                        "legendFormat": "MARS lower E2E vs {{second_best}}",
-                        "range": true
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": []
-            }
+      "description": "Live fraction: (second-best non-MARS TTFT - MARS TTFT) / second-best non-MARS TTFT.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "transparent",
+            "mode": "fixed"
           },
-          "description": "Live fraction: (second-best non-MARS E2E - MARS E2E) / second-best non-MARS E2E.",
-          "id": 2,
-          "links": [],
-          "title": "End-to-end improvement",
-          "transparent": true,
-          "vizConfig": {
-            "group": "stat",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "fixedColor": "transparent",
-                    "mode": "fixed"
-                  },
-                  "decimals": 1,
-                  "max": 1,
-                  "min": 0,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  },
-                  "unit": "percentunit"
-                },
-                "overrides": []
-              },
-              "options": {
-                "colorMode": "background",
-                "graphMode": "none",
-                "justifyMode": "auto",
-                "orientation": "horizontal",
-                "percentChangeColorMode": "standard",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showPercentChange": false,
-                "textMode": "auto",
-                "wideLayout": true
+          "decimals": 1,
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
               }
-            },
-            "version": "13.0.2"
-          }
-        }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
       },
-      "panel-3": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "datasource": {
-                        "name": "prometheus"
-                      },
-                      "group": "prometheus",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "react_benchmark_elapsed_seconds",
-                        "interval": "1s",
-                        "legendFormat": "seconds since test start",
-                        "range": true
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": []
-            }
-          },
-          "description": "",
-          "id": 3,
-          "links": [],
-          "title": "Replay position",
-          "transparent": true,
-          "vizConfig": {
-            "group": "stat",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "thresholds"
-                  },
-                  "decimals": 0,
-                  "max": 300,
-                  "min": 0,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "blue",
-                        "value": 0
-                      },
-                      {
-                        "color": "green",
-                        "value": 295
-                      }
-                    ]
-                  },
-                  "unit": "none"
-                },
-                "overrides": []
-              },
-              "options": {
-                "colorMode": "background",
-                "graphMode": "none",
-                "justifyMode": "center",
-                "orientation": "horizontal",
-                "percentChangeColorMode": "standard",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showPercentChange": false,
-                "textMode": "value_and_name",
-                "wideLayout": true
-              }
-            },
-            "version": "13.0.2"
-          }
-        }
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 0
       },
-      "panel-4": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "datasource": {
-                        "name": "prometheus"
-                      },
-                      "group": "prometheus",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "react_benchmark_ttft_current_mean_seconds",
-                        "interval": "1s",
-                        "legendFormat": "{{system}}",
-                        "range": true
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": [
-                {
-                  "group": "renameByRegex",
-                  "kind": "Transformation",
-                  "spec": {
-                    "options": {
-                      "regex": "^mars$",
-                      "renamePattern": "MARS"
-                    }
-                  }
-                },
-                {
-                  "group": "renameByRegex",
-                  "kind": "Transformation",
-                  "spec": {
-                    "options": {
-                      "regex": "^recompute$",
-                      "renamePattern": "Recompute"
-                    }
-                  }
-                },
-                {
-                  "group": "renameByRegex",
-                  "kind": "Transformation",
-                  "spec": {
-                    "options": {
-                      "regex": "^mooncake$",
-                      "renamePattern": "Mooncake"
-                    }
-                  }
-                },
-                {
-                  "group": "renameByRegex",
-                  "kind": "Transformation",
-                  "spec": {
-                    "options": {
-                      "regex": "^lmcache$",
-                      "renamePattern": "LMCache"
-                    }
-                  }
-                }
-              ]
-            }
-          },
-          "description": "",
-          "id": 4,
-          "links": [],
-          "title": "TTFT mean \u2014 elapsed-time overlay",
-          "transparent": true,
-          "vizConfig": {
-            "group": "timeseries",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "axisBorderShow": false,
-                    "axisCenteredZero": false,
-                    "axisColorMode": "text",
-                    "axisLabel": "Mean TTFT (seconds)",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 10,
-                    "gradientMode": "none",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "insertNulls": false,
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 3,
-                    "pointSize": 3,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "never",
-                    "showValues": false,
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  },
-                  "decimals": 1,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  },
-                  "unit": "s"
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "elapsed_seconds"
-                    },
-                    "properties": [
-                      {
-                        "id": "min",
-                        "value": 0
-                      },
-                      {
-                        "id": "max",
-                        "value": 300
-                      },
-                      {
-                        "id": "custom.axisLabel",
-                        "value": "Seconds since test start"
-                      },
-                      {
-                        "id": "custom.hideFrom",
-                        "value": {
-                          "legend": true,
-                          "tooltip": true,
-                          "viz": false
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "MARS",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#dc2626",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "LMCache",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#2563eb",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Mooncake",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#7c3aed",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Recompute",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#64748b",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              },
-              "options": {
-                "annotations": {
-                  "clustering": -1,
-                  "multiLane": false
-                },
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "multi",
-                  "sort": "asc"
-                }
-              }
-            },
-            "version": "13.0.2"
-          }
-        }
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "panel-5": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "datasource": {
-                        "name": "prometheus"
-                      },
-                      "group": "prometheus",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "react_benchmark_e2e_current_mean_seconds",
-                        "interval": "1s",
-                        "legendFormat": "{{system}}",
-                        "range": true
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": [
-                {
-                  "group": "renameByRegex",
-                  "kind": "Transformation",
-                  "spec": {
-                    "options": {
-                      "regex": "^mars$",
-                      "renamePattern": "MARS"
-                    }
-                  }
-                },
-                {
-                  "group": "renameByRegex",
-                  "kind": "Transformation",
-                  "spec": {
-                    "options": {
-                      "regex": "^recompute$",
-                      "renamePattern": "Recompute"
-                    }
-                  }
-                },
-                {
-                  "group": "renameByRegex",
-                  "kind": "Transformation",
-                  "spec": {
-                    "options": {
-                      "regex": "^mooncake$",
-                      "renamePattern": "Mooncake"
-                    }
-                  }
-                },
-                {
-                  "group": "renameByRegex",
-                  "kind": "Transformation",
-                  "spec": {
-                    "options": {
-                      "regex": "^lmcache$",
-                      "renamePattern": "LMCache"
-                    }
-                  }
-                }
-              ]
-            }
-          },
-          "description": "",
-          "id": 5,
-          "links": [],
-          "title": "End-to-end mean \u2014 elapsed-time overlay",
-          "transparent": true,
-          "vizConfig": {
-            "group": "timeseries",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "axisBorderShow": false,
-                    "axisCenteredZero": false,
-                    "axisColorMode": "text",
-                    "axisLabel": "Mean E2E latency (seconds)",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 10,
-                    "gradientMode": "none",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "insertNulls": false,
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 3,
-                    "pointSize": 3,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "never",
-                    "showValues": false,
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  },
-                  "decimals": 1,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  },
-                  "unit": "s"
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "elapsed_seconds"
-                    },
-                    "properties": [
-                      {
-                        "id": "min",
-                        "value": 0
-                      },
-                      {
-                        "id": "max",
-                        "value": 300
-                      },
-                      {
-                        "id": "custom.axisLabel",
-                        "value": "Seconds since test start"
-                      },
-                      {
-                        "id": "custom.hideFrom",
-                        "value": {
-                          "legend": true,
-                          "tooltip": true,
-                          "viz": false
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "MARS",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#dc2626",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "LMCache",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#2563eb",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Mooncake",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#7c3aed",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Recompute",
-                      "scope": "series"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#64748b",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              },
-              "options": {
-                "annotations": {
-                  "clustering": -1,
-                  "multiLane": false
-                },
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "multi",
-                  "sort": "asc"
-                }
-              }
-            },
-            "version": "13.0.2"
-          }
+      "pluginVersion": "13.0.2",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_improvement_fraction",
+          "legendFormat": "({{second_best}} - MARS) / {{second_best}}",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
         }
-      },
-      "panel-6": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "group": "",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "react_benchmark_ttft_current_mean_seconds",
-                        "interval": "1s",
-                        "legendFormat": "{{system}}",
-                        "range": true
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": []
-            }
-          },
-          "description": "",
-          "id": 6,
-          "links": [],
-          "title": "Current mean TTFT",
-          "transparent": true,
-          "vizConfig": {
-            "group": "bargauge",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "decimals": 1,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  },
-                  "unit": "s"
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "mars"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#dc2626",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "lmcache"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#94a3b8",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "mooncake"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#94a3b8",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "recompute"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#94a3b8",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              },
-              "options": {
-                "displayMode": "lcd",
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": false
-                },
-                "maxVizHeight": 300,
-                "minVizHeight": 16,
-                "minVizWidth": 8,
-                "namePlacement": "auto",
-                "orientation": "horizontal",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showUnfilled": true,
-                "sizing": "auto",
-                "valueMode": "color"
-              }
-            },
-            "version": "13.0.2"
-          }
-        }
-      },
-      "panel-7": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "group": "",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "react_benchmark_e2e_current_mean_seconds",
-                        "interval": "1s",
-                        "legendFormat": "{{system}}",
-                        "range": true
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": []
-            }
-          },
-          "description": "",
-          "id": 7,
-          "links": [],
-          "title": "Current mean end-to-end latency",
-          "transparent": true,
-          "vizConfig": {
-            "group": "bargauge",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "decimals": 1,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  },
-                  "unit": "s"
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "mars"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#dc2626",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "lmcache"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#94a3b8",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "mooncake"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#94a3b8",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "recompute"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#94a3b8",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              },
-              "options": {
-                "displayMode": "lcd",
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": false
-                },
-                "maxVizHeight": 300,
-                "minVizHeight": 16,
-                "minVizWidth": 8,
-                "namePlacement": "auto",
-                "orientation": "horizontal",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showUnfilled": true,
-                "sizing": "auto",
-                "valueMode": "color"
-              }
-            },
-            "version": "13.0.2"
-          }
-        }
-      },
-      "panel-8": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [],
-              "queryOptions": {},
-              "transformations": []
-            }
-          },
-          "description": "",
-          "id": 8,
-          "links": [],
-          "title": "ReAct rack topology",
-          "transparent": true,
-          "vizConfig": {
-            "group": "text",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {},
-                "overrides": []
-              },
-              "options": {
-                "code": {
-                  "language": "plaintext",
-                  "showLineNumbers": false,
-                  "showMiniMap": false
-                },
-                "content": "<div class=\"react-rack\"><div class=\"rack-label\">SHARED MEMORY FABRIC</div><div class=\"rack-unit switch\"><b>High-speed network switch</b><span>\u2195 200\u2013800 Gb/s links</span></div><div class=\"fabric\">\u2195&nbsp;&nbsp;&nbsp;\u2195&nbsp;&nbsp;&nbsp;\u2195&nbsp;&nbsp;&nbsp;\u2195</div><div class=\"agents\"><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 01</div><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 02</div><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 03</div><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 04</div></div><div class=\"fabric\">\u2195&nbsp;&nbsp;&nbsp; pooled KV state &nbsp;&nbsp;&nbsp;\u2195</div><div class=\"rack-unit cxl\"><b>CXL pooled memory</b><span>shared cache and agent state</span></div><div class=\"method\"><b>Fair comparison</b><br>One serving system per run<br>Same workload and duration<br>Overlay by elapsed seconds</div></div><style>.react-rack{height:100%;box-sizing:border-box;padding:16px;border:2px solid #334155;border-radius:10px;background:linear-gradient(180deg,#0f172a,#020617);color:#e2e8f0;font:14px Inter,Arial,sans-serif}.rack-label{text-align:center;color:#67e8f9;font-weight:800;letter-spacing:1.4px;margin:2px 0 14px}.rack-unit{border-radius:8px;padding:12px;margin:7px 0;text-align:center;box-shadow:0 0 14px #0008}.rack-unit span{display:block;color:#cbd5e1;font-size:12px;margin-top:4px}.switch{border:1px solid #60a5fa;background:#172554}.agent{border:1px solid #22d3ee;background:#064e52}.cxl{border:1px solid #a78bfa;background:#312e81}.fabric{text-align:center;color:#38bdf8;font-size:20px;line-height:24px}.method{margin-top:18px;padding:14px;border-top:1px solid #334155;line-height:1.55;color:#cbd5e1}.method b{color:#f8fafc}</style>",
-                "mode": "html"
-              }
-            },
-            "version": "13.0.2"
-          }
-        }
-      },
-      "panel-9": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "datasource": {
-                        "name": "prometheus"
-                      },
-                      "group": "prometheus",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "editorMode": "code",
-                        "expr": "react_benchmark_elapsed_seconds",
-                        "interval": "1s",
-                        "legendFormat": "Replay progress",
-                        "range": true
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "A"
-                  }
-                }
-              ],
-              "queryOptions": {},
-              "transformations": []
-            }
-          },
-          "description": "The fill and numeric label advance from 0 to the final normalized test second.",
-          "id": 9,
-          "links": [],
-          "title": "Normalized test time \u2014 final value 300 seconds",
-          "transparent": true,
-          "vizConfig": {
-            "group": "bargauge",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "fixedColor": "#14b8a6",
-                    "mode": "fixed"
-                  },
-                  "decimals": 0,
-                  "max": 300,
-                  "min": 0,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green",
-                        "value": 0
-                      }
-                    ]
-                  },
-                  "unit": "none"
-                },
-                "overrides": []
-              },
-              "options": {
-                "displayMode": "gradient",
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom",
-                  "showLegend": false
-                },
-                "maxVizHeight": 80,
-                "minVizHeight": 24,
-                "minVizWidth": 8,
-                "namePlacement": "left",
-                "orientation": "horizontal",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "showUnfilled": true,
-                "sizing": "auto",
-                "valueMode": "text"
-              }
-            },
-            "version": "13.0.2"
-          }
-        }
-      },
-      "panel-11": {
-        "kind": "Panel",
-        "spec": {
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [],
-              "queryOptions": {},
-              "transformations": []
-            }
-          },
-          "description": "Presentation overview with live embedded panels \u2014 mirrors CXL CMS slide layout.",
-          "id": 11,
-          "links": [],
-          "title": "Benchmark Hero",
-          "transparent": true,
-          "vizConfig": {
-            "group": "text",
-            "kind": "VizConfig",
-            "spec": {
-              "fieldConfig": {
-                "defaults": {},
-                "overrides": []
-              },
-              "options": {
-                "code": {
-                  "language": "plaintext",
-                  "showLineNumbers": false,
-                  "showMiniMap": false
-                },
-                "content": "<div class=\"hero\"><div class=\"hero-title\">ReAct Serving Benchmark:<br><span>MARS KV-Cache Reuse</span></div><div class=\"row top-row\"><div class=\"cell cell-stats\"><iframe src=\"/d-solo/fa2b8965-3406-473d-8346-bd69b52c90eb?from=now-5m&to=now&refresh=5s&theme=dark&panelId=1\" frameborder=\"0\"></iframe><iframe src=\"/d-solo/fa2b8965-3406-473d-8346-bd69b52c90eb?from=now-5m&to=now&refresh=5s&theme=dark&panelId=2\" frameborder=\"0\"></iframe></div><div class=\"cell cell-bar\"><div class=\"section-label\">Average TTFT<br><span>(Time to First Token)</span></div><iframe src=\"/d-solo/fa2b8965-3406-473d-8346-bd69b52c90eb?from=now-5m&to=now&refresh=5s&theme=dark&panelId=6\" frameborder=\"0\"></iframe></div><div class=\"cell cell-bar\"><div class=\"section-label\">Average End-to-End Latency<br><span>(Full request lifecycle)</span></div><iframe src=\"/d-solo/fa2b8965-3406-473d-8346-bd69b52c90eb?from=now-5m&to=now&refresh=5s&theme=dark&panelId=7\" frameborder=\"0\"></iframe></div></div><div class=\"row bottom-row\"><div class=\"cell cell-ts\"><div class=\"section-label\">TTFT (seconds)</div><iframe src=\"/d-solo/fa2b8965-3406-473d-8346-bd69b52c90eb?from=now-5m&to=now&refresh=5s&theme=dark&panelId=4\" frameborder=\"0\"></iframe></div><div class=\"cell cell-ts\"><div class=\"section-label\">End-to-End Latency (seconds)</div><iframe src=\"/d-solo/fa2b8965-3406-473d-8346-bd69b52c90eb?from=now-5m&to=now&refresh=5s&theme=dark&panelId=5\" frameborder=\"0\"></iframe></div></div></div><style>.hero{height:100%;box-sizing:border-box;padding:20px 24px;background:linear-gradient(180deg,#1a0a00 0%,#0d0d0d 100%);color:#e2e8f0;font:14px Inter,system-ui,sans-serif;overflow:hidden}.hero-title{text-align:center;font-size:28px;font-weight:900;letter-spacing:1px;color:#fb923c;margin-bottom:20px;line-height:1.2}.hero-title span{color:#f97316;font-size:32px}.row{display:flex;gap:12px;margin-bottom:12px}.cell{border:1px solid #334155;border-radius:10px;background:rgba(20,20,20,0.6);overflow:hidden}.cell-stats{flex:0 0 24%;display:flex;flex-direction:column;gap:4px;padding:4px}.cell-stats iframe{flex:1;width:100%;min-height:0;border:none;border-radius:6px}.cell-bar{flex:1;display:flex;flex-direction:column;padding:8px 4px 4px}.cell-bar iframe{flex:1;width:100%;min-height:0;border:none;border-radius:6px}.cell-ts{flex:1;display:flex;flex-direction:column;padding:8px 4px 4px}.cell-ts iframe{flex:1;width:100%;min-height:0;border:none;border-radius:6px}.section-label{text-align:center;font-size:14px;font-weight:800;color:#e2e8f0;margin-bottom:6px;line-height:1.3}.section-label span{font-size:11px;color:#94a3b8;font-weight:400}.top-row{height:45%}.bottom-row{height:50%}</style>",
-                "mode": "html"
-              }
-            },
-            "version": "13.0.2"
-          }
-        }
-      }
+      ],
+      "title": "MARS performance improvement",
+      "type": "stat",
+      "transparent": true
     },
-    "layout": {
-      "kind": "GridLayout",
-      "spec": {
-        "items": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Live fraction: (second-best non-MARS E2E - MARS E2E) / second-best non-MARS E2E.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "transparent",
+            "mode": "fixed"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.2",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_improvement_fraction",
+          "legendFormat": "MARS lower E2E vs {{second_best}}",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        }
+      ],
+      "title": "End-to-end improvement",
+      "type": "stat",
+      "transparent": true
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
           {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-1"
-              },
-              "height": 5,
-              "width": 12,
-              "x": 0,
-              "y": 0
-            }
+            "matcher": {
+              "id": "byName",
+              "options": "mars"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#dc2626",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-2"
-              },
-              "height": 5,
-              "width": 12,
-              "x": 12,
-              "y": 0
-            }
+            "matcher": {
+              "id": "byName",
+              "options": "lmcache"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-6"
-              },
-              "height": 5,
-              "width": 12,
-              "x": 0,
-              "y": 5
-            }
+            "matcher": {
+              "id": "byName",
+              "options": "mooncake"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-7"
-              },
-              "height": 5,
-              "width": 12,
-              "x": 12,
-              "y": 5
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-4"
-              },
-              "height": 11,
-              "width": 12,
-              "x": 0,
-              "y": 10
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-5"
-              },
-              "height": 11,
-              "width": 12,
-              "x": 12,
-              "y": 10
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-3"
-              },
-              "height": 5,
-              "width": 24,
-              "x": 0,
-              "y": 21
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-9"
-              },
-              "height": 3,
-              "width": 24,
-              "x": 0,
-              "y": 26
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-8"
-              },
-              "height": 10,
-              "width": 24,
-              "x": 0,
-              "y": 29
-            }
-          },
-          {
-            "kind": "GridLayoutItem",
-            "spec": {
-              "element": {
-                "kind": "ElementReference",
-                "name": "panel-11"
-              },
-              "height": 20,
-              "width": 24,
-              "x": 0,
-              "y": 39
-            }
+            "matcher": {
+              "id": "byName",
+              "options": "recompute"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
-      }
-    },
-    "links": [],
-    "liveNow": true,
-    "preload": false,
-    "tags": [
-      "react",
-      "vllm",
-      "benchmark",
-      "cxl"
-    ],
-    "timeSettings": {
-      "autoRefresh": "5s",
-      "autoRefreshIntervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "id": 6,
+      "options": {
+        "displayMode": "lcd",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        }
+      },
+      "pluginVersion": "13.0.2",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds{system=\"mars\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds{system=\"lmcache\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "B",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds{system=\"mooncake\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "C",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds{system=\"recompute\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "D",
+          "interval": "1s"
+        }
       ],
-      "fiscalYearStartMonth": 0,
-      "from": "now-5m",
-      "hideTimepicker": false,
-      "timezone": "browser",
-      "to": "now"
+      "title": "Current mean TTFT",
+      "type": "bargauge",
+      "transparent": true
     },
-    "title": "ReAct Serving Benchmark Comparison",
-    "variables": []
-  }
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mars"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#dc2626",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "lmcache"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mooncake"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "recompute"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "id": 7,
+      "options": {
+        "displayMode": "lcd",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        }
+      },
+      "pluginVersion": "13.0.2",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_current_mean_seconds{system=\"mars\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_current_mean_seconds{system=\"lmcache\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "B",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_current_mean_seconds{system=\"mooncake\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "C",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_current_mean_seconds{system=\"recompute\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "D",
+          "interval": "1s"
+        }
+      ],
+      "title": "Current mean end-to-end latency",
+      "type": "bargauge",
+      "transparent": true
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Mean TTFT (seconds)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "axisBorderShow": false,
+            "barWidthFactor": 0.6,
+            "showValues": false
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "elapsed_seconds"
+            },
+            "properties": [
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 300
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Seconds since test start"
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "MARS",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#dc2626",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LMCache",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#2563eb",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mooncake",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#7c3aed",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Recompute",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#64748b",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "asc",
+          "hideZeros": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        }
+      ],
+      "title": "TTFT mean \u2014 elapsed-time overlay",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^mars$",
+            "renamePattern": "MARS"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^recompute$",
+            "renamePattern": "Recompute"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^mooncake$",
+            "renamePattern": "Mooncake"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^lmcache$",
+            "renamePattern": "LMCache"
+          }
+        }
+      ],
+      "type": "timeseries",
+      "transparent": true,
+      "pluginVersion": "13.0.2"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Mean E2E latency (seconds)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "axisBorderShow": false,
+            "barWidthFactor": 0.6,
+            "showValues": false
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "elapsed_seconds"
+            },
+            "properties": [
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 300
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Seconds since test start"
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "MARS",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#dc2626",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LMCache",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#2563eb",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mooncake",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#7c3aed",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Recompute",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#64748b",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "asc",
+          "hideZeros": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_current_mean_seconds",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        }
+      ],
+      "title": "End-to-end mean \u2014 elapsed-time overlay",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^mars$",
+            "renamePattern": "MARS"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^recompute$",
+            "renamePattern": "Recompute"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^mooncake$",
+            "renamePattern": "Mooncake"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^lmcache$",
+            "renamePattern": "LMCache"
+          }
+        }
+      ],
+      "type": "timeseries",
+      "transparent": true,
+      "pluginVersion": "13.0.2"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "max": 300,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 295
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_elapsed_seconds",
+          "legendFormat": "seconds since test start",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        }
+      ],
+      "title": "Replay position",
+      "type": "stat",
+      "transparent": true
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "The fill and numeric label advance from 0 to the final normalized test second.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#14b8a6",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "max": 300,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 9,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 80,
+        "minVizHeight": 24,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "text",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_elapsed_seconds",
+          "legendFormat": "Replay progress",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        }
+      ],
+      "title": "Normalized test time \u2014 final value 300 seconds",
+      "type": "bargauge",
+      "transparent": true,
+      "pluginVersion": "13.0.2"
+    },
+    {
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 8,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div class=\"react-rack\"><div class=\"rack-label\">SHARED MEMORY FABRIC</div><div class=\"rack-unit switch\"><b>High-speed network switch</b><span>\u2195 200\u2013800 Gb/s links</span></div><div class=\"fabric\">\u2195&nbsp;&nbsp;&nbsp;\u2195&nbsp;&nbsp;&nbsp;\u2195&nbsp;&nbsp;&nbsp;\u2195</div><div class=\"agents\"><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 01</div><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 02</div><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 03</div><div class=\"rack-unit agent\">\ud83e\udde0 ReAct agent 04</div></div><div class=\"fabric\">\u2195&nbsp;&nbsp;&nbsp; pooled KV state &nbsp;&nbsp;&nbsp;\u2195</div><div class=\"rack-unit cxl\"><b>CXL pooled memory</b><span>shared cache and agent state</span></div><div class=\"method\"><b>Fair comparison</b><br>One serving system per run<br>Same workload and duration<br>Overlay by elapsed seconds</div></div><style>.react-rack{height:100%;box-sizing:border-box;padding:16px;border:2px solid #334155;border-radius:10px;background:linear-gradient(180deg,#0f172a,#020617);color:#e2e8f0;font:14px Inter,Arial,sans-serif}.rack-label{text-align:center;color:#67e8f9;font-weight:800;letter-spacing:1.4px;margin:2px 0 14px}.rack-unit{border-radius:8px;padding:12px;margin:7px 0;text-align:center;box-shadow:0 0 14px #0008}.rack-unit span{display:block;color:#cbd5e1;font-size:12px;margin-top:4px}.switch{border:1px solid #60a5fa;background:#172554}.agent{border:1px solid #22d3ee;background:#064e52}.cxl{border:1px solid #a78bfa;background:#312e81}.fabric{text-align:center;color:#38bdf8;font-size:20px;line-height:24px}.method{margin-top:18px;padding:14px;border-top:1px solid #334155;line-height:1.55;color:#cbd5e1}.method b{color:#f8fafc}</style>",
+        "mode": "html"
+      },
+      "pluginVersion": "11.2.0",
+      "title": "ReAct rack topology",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 20,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 11,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div class=\"hero\"><div class=\"hero-title\">ReAct Serving Benchmark:<br><span>MARS KV-Cache Reuse</span></div><div class=\"row top-row\"><div class=\"cell cell-stats\"><iframe src=\"/d-solo/react-serving-benchmark?from=now-5m&to=now&refresh=5s&theme=dark&panelId=1\" frameborder=\"0\"></iframe><iframe src=\"/d-solo/react-serving-benchmark?from=now-5m&to=now&refresh=5s&theme=dark&panelId=2\" frameborder=\"0\"></iframe></div><div class=\"cell cell-bar\"><div class=\"section-label\">Average TTFT<br><span>(Time to First Token)</span></div><iframe src=\"/d-solo/react-serving-benchmark?from=now-5m&to=now&refresh=5s&theme=dark&panelId=6\" frameborder=\"0\"></iframe></div><div class=\"cell cell-bar\"><div class=\"section-label\">Average End-to-End Latency<br><span>(Full request lifecycle)</span></div><iframe src=\"/d-solo/react-serving-benchmark?from=now-5m&to=now&refresh=5s&theme=dark&panelId=7\" frameborder=\"0\"></iframe></div></div><div class=\"row bottom-row\"><div class=\"cell cell-ts\"><div class=\"section-label\">TTFT (seconds)</div><iframe src=\"/d-solo/react-serving-benchmark?from=now-5m&to=now&refresh=5s&theme=dark&panelId=4\" frameborder=\"0\"></iframe></div><div class=\"cell cell-ts\"><div class=\"section-label\">End-to-End Latency (seconds)</div><iframe src=\"/d-solo/react-serving-benchmark?from=now-5m&to=now&refresh=5s&theme=dark&panelId=5\" frameborder=\"0\"></iframe></div></div></div><style>.hero{height:100%;box-sizing:border-box;padding:20px 24px;background:linear-gradient(180deg,#1a0a00 0%,#0d0d0d 100%);color:#e2e8f0;font:14px Inter,system-ui,sans-serif;overflow:hidden}.hero-title{text-align:center;font-size:28px;font-weight:900;letter-spacing:1px;color:#fb923c;margin-bottom:20px;line-height:1.2}.hero-title span{color:#f97316;font-size:32px}.row{display:flex;gap:12px;margin-bottom:12px}.cell{border:1px solid #334155;border-radius:10px;background:rgba(20,20,20,0.6);overflow:hidden}.cell-stats{flex:0 0 24%;display:flex;flex-direction:column;gap:4px;padding:4px}.cell-stats iframe{flex:1;width:100%;min-height:0;border:none;border-radius:6px}.cell-bar{flex:1;display:flex;flex-direction:column;padding:8px 4px 4px}.cell-bar iframe{flex:1;width:100%;min-height:0;border:none;border-radius:6px}.cell-ts{flex:1;display:flex;flex-direction:column;padding:8px 4px 4px}.cell-ts iframe{flex:1;width:100%;min-height:0;border:none;border-radius:6px}.section-label{text-align:center;font-size:14px;font-weight:800;color:#e2e8f0;margin-bottom:6px;line-height:1.3}.section-label span{font-size:11px;color:#94a3b8;font-weight:400}.top-row{height:45%}.bottom-row{height:50%}</style>",
+        "mode": "html"
+      },
+      "pluginVersion": "11.2.0",
+      "title": "Benchmark Hero",
+      "transparent": true,
+      "type": "text"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "react",
+    "vllm",
+    "benchmark",
+    "cxl"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "ReAct Serving Benchmark Comparison",
+  "uid": "react-serving-benchmark",
+  "version": 1,
+  "weekStart": ""
 }
