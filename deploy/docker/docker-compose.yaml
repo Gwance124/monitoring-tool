@@ -19,8 +19,7 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ../../dashboards:/var/lib/grafana/dashboards:ro
-      - ./grafana/custom.css:/usr/share/grafana/public/build/custom.css:ro
-      - ./grafana/index.html:/usr/share/grafana/public/views/index.html:ro
+      - ../../benchmark/react_agent/grafana:/var/lib/grafana/react-benchmark:ro
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
