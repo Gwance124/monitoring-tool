@@ -47,6 +47,16 @@
           MARS compared with second-best system
         </div>
       </div>
+
+      <div class="summary-block secondary-summary">
+        <div class="summary-label">Cache hit<br />improvement</div>
+        <div class="summary-value small">
+          <span id="cache-improvement">--</span><span class="percent-symbol">%</span>
+        </div>
+        <div id="cache-improvement-detail" class="summary-detail">
+          MARS compared with second-best system
+        </div>
+      </div>
     </section>
 
     <section class="metric-column">
@@ -61,6 +71,13 @@
       <div class="metric-subtitle">Lower is better</div>
 
       <div id="e2e-bars" class="lcd-bar-group"></div>
+    </section>
+
+    <section class="metric-column">
+      <h2>Current Cache Hit Rate</h2>
+      <div class="metric-subtitle">Higher is better</div>
+
+      <div id="cache-bars" class="lcd-bar-group"></div>
     </section>
 
     <section class="chart-section chart-left">
@@ -89,6 +106,20 @@
         ></svg>
       </div>
       <div id="e2e-legend" class="chart-legend"></div>
+    </section>
+
+    <section class="chart-section chart-cache">
+      <h2>Cache Hit Rate</h2>
+      <div class="chart-shell">
+        <svg
+          id="cache-chart"
+          class="live-chart"
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label="Cache hit rate by serving system"
+        ></svg>
+      </div>
+      <div id="cache-legend" class="chart-legend"></div>
     </section>
   </main>
 

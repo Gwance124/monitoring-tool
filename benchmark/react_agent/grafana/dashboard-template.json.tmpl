@@ -28,6 +28,166 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 25,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 10,
+      "links": [],
+      "title": "",
+      "type": "gapit-htmlgraphics-panel",
+      "transparent": false,
+      "options": {
+        "SVGBaseFix": true,
+        "add100Percentage": true,
+        "calcsMutation": "standard",
+        "centerAlignContent": true,
+        "codeData": "{\"text\": \"Random text\"}",
+        "css": "__HERO_CSS__",
+        "dynamicData": false,
+        "dynamicFieldDisplayValues": false,
+        "dynamicHtmlGraphics": false,
+        "dynamicProps": false,
+        "html": "__HERO_HTML__",
+        "onInit": "",
+        "onInitOnResize": false,
+        "onRender": "__HERO_JS__",
+        "overflow": "visible",
+        "panelupdateOnMount": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull",
+            "last",
+            "firstNotNull",
+            "first",
+            "min",
+            "max",
+            "mean",
+            "sum",
+            "count",
+            "range",
+            "delta",
+            "step",
+            "diff",
+            "logmin",
+            "allIsZero",
+            "allIsNull",
+            "diffperc"
+          ]
+        },
+        "renderOnMount": true,
+        "rootCSS": "",
+        "useGrafanaScrollbar": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_improvement_fraction",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_improvement_fraction",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_e2e_current_mean_seconds",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_ratio",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_improvement_fraction",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "F"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Live fraction: (second-best non-MARS TTFT - MARS TTFT) / second-best non-MARS TTFT.",
       "fieldConfig": {
         "defaults": {
@@ -56,7 +216,7 @@
         "h": 5,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 25
       },
       "id": 1,
       "options": {
@@ -124,7 +284,7 @@
         "h": 5,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 25
       },
       "id": 2,
       "options": {
@@ -245,7 +405,7 @@
         "h": 5,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 30
       },
       "id": 6,
       "options": {
@@ -397,7 +557,7 @@
         "h": 5,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 30
       },
       "id": 7,
       "options": {
@@ -619,7 +779,7 @@
         "h": 11,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 35
       },
       "id": 4,
       "options": {
@@ -840,7 +1000,7 @@
         "h": 11,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 35
       },
       "id": 5,
       "options": {
@@ -940,7 +1100,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 46
       },
       "id": 3,
       "options": {
@@ -1010,7 +1170,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 51
       },
       "id": 9,
       "options": {
@@ -1051,140 +1211,6 @@
       "type": "bargauge",
       "transparent": true,
       "pluginVersion": "13.0.2"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 25,
-        "w": 24,
-        "x": 0,
-        "y": 29
-      },
-      "id": 10,
-      "links": [],
-      "title": "",
-      "type": "gapit-htmlgraphics-panel",
-      "transparent": false,
-      "options": {
-        "SVGBaseFix": true,
-        "add100Percentage": true,
-        "calcsMutation": "standard",
-        "centerAlignContent": true,
-        "codeData": "{\"text\": \"Random text\"}",
-        "css": "__HERO_CSS__",
-        "dynamicData": false,
-        "dynamicFieldDisplayValues": false,
-        "dynamicHtmlGraphics": false,
-        "dynamicProps": false,
-        "html": "__HERO_HTML__",
-        "onInit": "",
-        "onInitOnResize": false,
-        "onRender": "__HERO_JS__",
-        "overflow": "visible",
-        "panelupdateOnMount": true,
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull",
-            "last",
-            "firstNotNull",
-            "first",
-            "min",
-            "max",
-            "mean",
-            "sum",
-            "count",
-            "range",
-            "delta",
-            "step",
-            "diff",
-            "logmin",
-            "allIsZero",
-            "allIsNull",
-            "diffperc"
-          ]
-        },
-        "renderOnMount": true,
-        "rootCSS": "",
-        "useGrafanaScrollbar": false
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "react_benchmark_ttft_improvement_fraction",
-          "instant": false,
-          "interval": "1s",
-          "legendFormat": "{{system}}",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "react_benchmark_e2e_improvement_fraction",
-          "instant": false,
-          "interval": "1s",
-          "legendFormat": "{{system}}",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "react_benchmark_ttft_current_mean_seconds",
-          "instant": false,
-          "interval": "1s",
-          "legendFormat": "{{system}}",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "react_benchmark_e2e_current_mean_seconds",
-          "instant": false,
-          "interval": "1s",
-          "legendFormat": "{{system}}",
-          "range": true,
-          "refId": "D"
-        }
-      ]
     }
   ],
   "refresh": "5s",

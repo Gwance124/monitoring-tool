@@ -632,6 +632,69 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
   });
 }
 
+function buildBarsPercent(containerId, currentValues) {
+  const container = root.getElementById(containerId);
+
+  if (!container) {
+    return;
+  }
+
+  container.replaceChildren();
+
+  const availableValues = Object.values(currentValues).filter(Number.isFinite);
+
+  if (availableValues.length === 0) {
+    container.textContent = "Awaiting Prometheus data";
+    return;
+  }
+
+  const segmentCount = 30;
+
+  ORDER.forEach((system) => {
+    const value = currentValues[system];
+
+    if (!Number.isFinite(value)) {
+      return;
+    }
+
+    const row = document.createElement("div");
+    row.className = "lcd-row";
+
+    const name = document.createElement("div");
+    name.className = `lcd-name ${system === "mars" ? "is-mars" : ""}`;
+    name.textContent = DISPLAY_NAMES[system];
+
+    const track = document.createElement("div");
+    track.className = "lcd-track";
+    track.style.setProperty("--bar-color", BAR_COLORS[system]);
+
+    const activeSegments = Math.max(
+      1,
+      Math.round(value * segmentCount)
+    );
+
+    for (let index = 0; index < segmentCount; index += 1) {
+      const segment = document.createElement("span");
+
+      segment.className =
+        index < activeSegments
+          ? "lcd-segment active"
+          : "lcd-segment";
+
+      track.appendChild(segment);
+    }
+
+    const valueNode = document.createElement("div");
+    valueNode.className = "lcd-value";
+    valueNode.style.setProperty("--bar-color", BAR_COLORS[system]);
+    valueNode.innerHTML =
+      `${(value * 100).toFixed(1)}<span class="lcd-unit">%</span>`;
+
+    row.append(name, track, valueNode);
+    container.appendChild(row);
+  });
+}
+
 const ttftImprovementFrames = framesForRef("A");
 const e2eImprovementFrames = framesForRef("B");
 
@@ -652,11 +715,23 @@ setImprovement(
   e2eImprovementFrames
 );
 
+const cacheSeries = seriesMap(framesForRef("E"));
+const cacheImprovementFrames = framesForRef("F");
+const cacheImprovement = latestFromFrames(cacheImprovementFrames);
+
+setImprovement(
+  "cache-improvement",
+  "cache-improvement-detail",
+  cacheImprovement,
+  cacheImprovementFrames
+);
+
 const ttftSeries = seriesMap(framesForRef("C"));
 const e2eSeries = seriesMap(framesForRef("D"));
 
 buildBars("ttft-bars", latestBySystem(ttftSeries));
 buildBars("e2e-bars", latestBySystem(e2eSeries));
+buildBarsPercent("cache-bars", latestBySystem(cacheSeries));
 
 buildChart(
   "ttft-chart",
@@ -670,6 +745,13 @@ buildChart(
   "e2e-legend",
   e2eSeries,
   "Mean E2E latency (seconds)"
+);
+
+buildChart(
+  "cache-chart",
+  "cache-legend",
+  cacheSeries,
+  "Cache Hit Rate"
 );
 
 const updated = root.getElementById("last-updated");

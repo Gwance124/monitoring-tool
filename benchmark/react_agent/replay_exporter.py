@@ -65,6 +65,7 @@ def load_runs() -> dict[str, list[dict[str, float | None]]]:
                         # on why p95 is captured but never plotted.
                         "ttft_mean": _optional_float(row["ttft_mean_seconds"]),
                         "e2e_mean": _optional_float(row["e2e_mean_seconds"]),
+                        "cache_hit_ratio": _optional_float(row.get("ext_cache_hit_ratio", "")),
                     }
                 )
         if not rows:
@@ -135,6 +136,8 @@ def render_metrics() -> str:
         "# TYPE react_benchmark_ttft_mean_seconds gauge",
         "# HELP react_benchmark_e2e_mean_seconds Mean p95 E2E over the saved run.",
         "# TYPE react_benchmark_e2e_mean_seconds gauge",
+        "# HELP react_benchmark_cache_hit_ratio External prefix cache hit ratio.",
+        "# TYPE react_benchmark_cache_hit_ratio gauge",
     ]
     for system in SYSTEMS:
         point = nearest(RUNS[system], elapsed)
@@ -166,6 +169,10 @@ def render_metrics() -> str:
             f"react_benchmark_e2e_mean_seconds{{{labels}}} "
             f"{mean_metric(system, 'e2e'):.6f}"
         )
+        if point["cache_hit_ratio"] is not None:
+            lines.append(
+                f"react_benchmark_cache_hit_ratio{{{labels}}} {point['cache_hit_ratio']:.6f}"
+            )
 
     for metric, mean_key in (("ttft", "ttft_mean"), ("e2e", "e2e_mean")):
         # Ranked and computed on the exact mean, not p95 -- these metric
@@ -204,6 +211,29 @@ def render_metrics() -> str:
                     f'{{second_best="{competitor}"}} {improvement_fraction:.8f}',
                 ]
             )
+    mars_cache = nearest(RUNS["mars"], elapsed)["cache_hit_ratio"]
+    if mars_cache is not None:
+        best_other_cache = None
+        best_other_system = None
+        for system in SYSTEMS:
+            if system == "mars":
+                continue
+            val = nearest(RUNS[system], elapsed)["cache_hit_ratio"]
+            if val is not None and (best_other_cache is None or val > best_other_cache):
+                best_other_cache = val
+                best_other_system = system
+        if best_other_cache is not None and best_other_cache > 0:
+            cache_improvement = (mars_cache - best_other_cache) / best_other_cache
+            lines.extend(
+                [
+                    "# HELP react_benchmark_cache_hit_improvement_fraction "
+                    "MARS cache hit ratio improvement: (MARS - second_best) / second_best.",
+                    "# TYPE react_benchmark_cache_hit_improvement_fraction gauge",
+                    f'react_benchmark_cache_hit_improvement_fraction'
+                    f'{{second_best="{best_other_system}"}} {cache_improvement:.8f}',
+                ]
+            )
+
     return "\n".join(lines) + "\n"
 
 
