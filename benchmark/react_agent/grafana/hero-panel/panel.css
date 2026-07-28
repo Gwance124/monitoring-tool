@@ -1,0 +1,468 @@
+:root {
+  --mars: #f04438;
+  --lmcache: #3b82f6;
+  --mooncake: #9b6cff;
+  --recompute: #9ca3af;
+
+  --text-primary: #f5f7fa;
+  --text-secondary: #b6bac3;
+  --text-muted: #777d88;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.benchmark-slide {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 800px;
+  overflow: hidden;
+  padding: 20px 34px 18px;
+
+  color: var(--text-primary);
+  font-family: Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  background:
+    radial-gradient(
+      circle at 10% 38%,
+      rgba(255, 255, 255, 0.035),
+      transparent 36%
+    ),
+    linear-gradient(
+      100deg,
+      #292929 0%,
+      #1d1d1d 31%,
+      #101010 68%,
+      #050505 100%
+    );
+}
+
+.top-left-logo {
+  position: absolute;
+  top: 10px;
+  left: 120px;
+  z-index: 5;
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+}
+
+.bottom-left-image {
+  grid-column: 1 / span 2;
+  grid-row: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 0;
+  min-height: 0;
+  padding: 20px;
+}
+
+.bottom-left-image img {
+  display: block;
+  width: auto;
+  height: auto;
+
+  max-width: 320px;
+
+  object-fit: contain;
+}
+
+.bottom-left-image,
+.bottom-left-image img {
+  background: transparent !important;
+}
+
+.corner-decoration {
+  position: absolute;
+  top: -8px;
+  right: -20px;
+  width: 360px;
+  height: 100px;
+  overflow: hidden;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.corner-decoration span {
+  position: absolute;
+  right: 0;
+  height: 14px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(220, 38, 38, 0.65),
+      rgba(127, 29, 29, 0.2)
+    );
+  transform: skewX(36deg);
+  transform-origin: right center;
+}
+
+.corner-decoration span:nth-child(1) {
+  top: 3px;
+  width: 310px;
+}
+
+.corner-decoration span:nth-child(2) {
+  top: 22px;
+  width: 265px;
+}
+
+.corner-decoration span:nth-child(3) {
+  top: 41px;
+  width: 220px;
+}
+
+.corner-decoration span:nth-child(4) {
+  top: 60px;
+  width: 175px;
+}
+
+.slide-header {
+  position: relative;
+  z-index: 2;
+  height: 72px;
+}
+
+.slide-header h1 {
+  margin: 0;
+  text-align: center;
+  font-family: "Roboto Mono", "IBM Plex Mono", Consolas, monospace;
+  font-size: clamp(26px, 2.7vw, 47px);
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  line-height: 1.15;
+}
+
+.title-accent {
+  margin-right: 14px;
+  color: #ef233c;
+}
+
+.title-main {
+  color: transparent;
+  background: linear-gradient(90deg, #ef4444, #ff8a24);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.title-rule {
+  position: absolute;
+  right: -34px;
+  bottom: 3px;
+  left: -34px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/*
+ * Two equal 5-column metric sections.
+ * Summary gets 2 columns.
+ */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: 305px minmax(350px, 1fr);
+  column-gap: 28px;
+  row-gap: 18px;
+  height: calc(100% - 106px);
+  padding-top: 14px;
+}
+
+.summary-column {
+  grid-column: 1 / span 2;
+  grid-row: 1;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 20px;
+
+  min-width: 0;
+  padding: 12px 4px 0 8px;
+}
+
+.summary-block {
+  min-width: 0;
+}
+
+.summary-label {
+  margin-bottom: 4px;
+  color: var(--text-primary);
+  font-size: clamp(17px, 1.25vw, 24px);
+  font-weight: 750;
+  line-height: 1.08;
+}
+
+/*
+ * Same size for both improvement percentages.
+ * Reduced so the second block remains inside the top row.
+ */
+.summary-value,
+.summary-value.small {
+  color: #ff922b;
+  font-size: clamp(42px, 3.6vw, 66px);
+  font-weight: 400;
+  letter-spacing: -3px;
+  line-height: 0.94;
+  white-space: nowrap;
+}
+
+.percent-symbol {
+  margin-left: 3px;
+  font-size: 0.5em;
+  font-weight: 550;
+  letter-spacing: 0;
+}
+
+.summary-detail {
+  max-width: 190px;
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+/*
+ * Both metric columns use exactly 5 columns.
+ */
+.metric-column {
+  grid-column: 3 / span 5;
+  grid-row: 1;
+  min-width: 0;
+  padding-top: 8px;
+}
+
+.metric-column + .metric-column {
+  grid-column: 8 / span 5;
+}
+
+.metric-column h2,
+.chart-section h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(19px, 1.45vw, 27px);
+  font-weight: 750;
+  text-align: center;
+}
+
+.metric-subtitle {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.lcd-bar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  width: 100%;
+  margin-top: 21px;
+}
+
+.lcd-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) 74px;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-width: 0;
+}
+
+.lcd-name {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: clamp(14px, 1vw, 19px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lcd-name.is-mars {
+  color: #fff;
+  font-weight: 650;
+}
+
+.lcd-track {
+  display: grid;
+  grid-template-columns: repeat(30, minmax(0, 1fr));
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+}
+
+.lcd-segment {
+  height: 100%;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.065);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+}
+
+.lcd-segment.active {
+  background: var(--bar-color);
+  box-shadow:
+    0 0 5px color-mix(in srgb, var(--bar-color), transparent 55%),
+    inset 0 0 5px rgba(255, 255, 255, 0.14);
+}
+
+.lcd-value {
+  color: var(--bar-color);
+  font-size: clamp(14px, 1.05vw, 20px);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lcd-unit {
+  margin-left: 3px;
+  font-size: 0.62em;
+}
+
+/*
+ * Both charts use equal six-column sections.
+ */
+.chart-section {
+  grid-row: 2;
+  min-width: 0;
+  min-height: 340px;
+}
+
+.chart-left {
+  grid-column: 3 / span 5;
+  grid-row: 2;
+}
+
+.chart-right {
+  grid-column: 8 / span 5;
+  grid-row: 2;
+}
+
+/*
+ * Inner width prevents both charts from appearing excessively wide.
+ * Both receive the exact same maximum width.
+ */
+.chart-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-section h2 {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.chart-shell {
+  width: min(100%, 720px);
+  height: calc(100% - 52px);
+  min-height: 285px;
+  margin: 0 auto;
+}
+
+.live-chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 14px;
+
+  width: min(100%, 720px);
+  min-height: 18px;
+  margin: 3px auto 0;
+
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.legend-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  width: 15px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--legend-color);
+}
+
+.slide-footer {
+  position: absolute;
+  right: 34px;
+  bottom: 7px;
+  left: 34px;
+
+  display: flex;
+  justify-content: space-between;
+
+  color: rgba(255, 255, 255, 0.34);
+  font-size: 10px;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1150px) {
+  .benchmark-slide {
+    min-height: 1100px;
+    overflow: auto;
+  }
+
+  .dashboard-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto auto auto;
+    height: auto;
+  }
+
+  .summary-column {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    flex-direction: row;
+    justify-content: space-around;
+  }
+
+  .metric-column {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .metric-column + .metric-column {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .chart-left {
+    grid-column: 1 / 3;
+    grid-row: 3;
+  }
+
+  .chart-right {
+    grid-column: 1 / 3;
+    grid-row: 4;
+  }
+
+  .chart-section {
+    min-height: 360px;
+  }
+
+  .chart-shell,
+  .chart-legend {
+    width: min(100%, 800px);
+  }
+}

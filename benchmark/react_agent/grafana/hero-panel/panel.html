@@ -1,0 +1,100 @@
+<div class="benchmark-slide">
+  <img
+    class="top-left-logo"
+    src="/public/img/custom/SK_Hynix.svg.webp"
+    alt="SK hynix"
+  />
+
+  <div class="corner-decoration" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <header class="slide-header">
+    <h1>
+      <span class="title-accent">ReAct</span>
+      <span class="title-main">(Reasoning & Acting) AI Agent Serving</span>
+    </h1>
+    <div class="title-rule"></div>
+  </header>
+
+  <main class="dashboard-layout">
+    <div class="bottom-left-image">
+      <img
+        src="/public/img/custom/server.png?v=3"
+        alt="System architecture"
+      />
+    </div>
+    <section class="summary-column">
+      <div class="summary-block">
+        <div class="summary-label">TTFT performance<br />improvement</div>
+        <div class="summary-value">
+          <span id="ttft-improvement">--</span><span class="percent-symbol">%</span>
+        </div>
+        <div id="ttft-improvement-detail" class="summary-detail">
+          MARS compared with second-best system
+        </div>
+      </div>
+
+      <div class="summary-block secondary-summary">
+        <div class="summary-label">End-to-end<br />improvement</div>
+        <div class="summary-value small">
+          <span id="e2e-improvement">--</span><span class="percent-symbol">%</span>
+        </div>
+        <div id="e2e-improvement-detail" class="summary-detail">
+          MARS compared with second-best system
+        </div>
+      </div>
+    </section>
+
+    <section class="metric-column">
+      <h2>Current Mean TTFT</h2>
+      <div class="metric-subtitle">Lower is better</div>
+
+      <div id="ttft-bars" class="lcd-bar-group"></div>
+    </section>
+
+    <section class="metric-column">
+      <h2>Current Mean End-to-End Latency</h2>
+      <div class="metric-subtitle">Lower is better</div>
+
+      <div id="e2e-bars" class="lcd-bar-group"></div>
+    </section>
+
+    <section class="chart-section chart-left">
+      <h2>TTFT Mean</h2>
+      <div class="chart-shell">
+        <svg
+          id="ttft-chart"
+          class="live-chart"
+          viewBox="0 0 760 300"
+          preserveAspectRatio="none"
+          role="img"
+          aria-label="TTFT mean by serving system"
+        ></svg>
+      </div>
+      <div id="ttft-legend" class="chart-legend"></div>
+    </section>
+
+    <section class="chart-section chart-right">
+      <h2>End-to-End Mean Latency</h2>
+      <div class="chart-shell">
+        <svg
+          id="e2e-chart"
+          class="live-chart"
+          viewBox="0 0 760 300"
+          preserveAspectRatio="none"
+          role="img"
+          aria-label="End-to-end latency by serving system"
+        ></svg>
+      </div>
+      <div id="e2e-legend" class="chart-legend"></div>
+    </section>
+  </main>
+
+  <footer class="slide-footer">
+    <span id="last-updated">Awaiting data</span>
+  </footer>
+</div>
