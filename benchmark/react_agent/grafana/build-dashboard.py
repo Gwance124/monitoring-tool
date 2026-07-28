@@ -13,7 +13,7 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 HERO_DIR = SCRIPT_DIR / "hero-panel"
-TEMPLATE = SCRIPT_DIR / "dashboard-template.json"
+TEMPLATE = SCRIPT_DIR / "dashboard-template.json.tmpl"
 OUTPUT = SCRIPT_DIR / "react-serving-benchmark.json"
 
 PLACEHOLDERS = {
