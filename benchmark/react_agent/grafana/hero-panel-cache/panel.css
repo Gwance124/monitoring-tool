@@ -167,8 +167,9 @@ body {
 }
 
 /*
- * Two equal 5-column metric sections.
- * Summary gets 2 columns.
+ * One metric column/chart pair for now, filling the row -- a second pair
+ * squishes both to half-width automatically (see .metric-column,
+ * .chart-section below).
  */
 .dashboard-layout {
   display: grid;
@@ -206,10 +207,6 @@ body {
   line-height: 1.08;
 }
 
-/*
- * Same size for both improvement percentages.
- * Reduced so the second block remains inside the top row.
- */
 .summary-value,
 .summary-value.small {
   color: #ff922b;
@@ -236,17 +233,31 @@ body {
 }
 
 /*
- * Both metric columns use exactly 5 columns.
+ * A metric's bars (row 1) and its chart (row 2) share the same column span
+ * -- stacked, not diagonal. With only one metric this column fills the
+ * whole width; adding a second .metric-column + .chart-section pair (like
+ * slide one's TTFT/e2e split) automatically squishes both to half-width,
+ * no other changes needed.
  */
-.metric-column {
+.metric-column,
+.chart-section {
+  grid-column: 3 / span 10;
+}
+
+.metric-column:has(+ .metric-column),
+.chart-section:has(+ .chart-section) {
   grid-column: 3 / span 5;
+}
+
+.metric-column + .metric-column,
+.chart-section + .chart-section {
+  grid-column: 8 / span 5;
+}
+
+.metric-column {
   grid-row: 1;
   min-width: 0;
   padding-top: 8px;
-}
-
-.metric-column + .metric-column {
-  grid-column: 8 / span 5;
 }
 
 .metric-column h2,
@@ -330,30 +341,11 @@ body {
   font-size: 0.62em;
 }
 
-/*
- * Both charts use equal six-column sections.
- */
 .chart-section {
   grid-row: 2;
   min-width: 0;
   min-height: 0;
-}
 
-.chart-left {
-  grid-column: 3 / span 5;
-  grid-row: 2;
-}
-
-.chart-right {
-  grid-column: 8 / span 5;
-  grid-row: 2;
-}
-
-/*
- * Inner width prevents both charts from appearing excessively wide.
- * Both receive the exact same maximum width.
- */
-.chart-section {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -365,7 +357,7 @@ body {
 }
 
 .chart-shell {
-  width: min(100%, 720px);
+  width: 100%;
   height: calc(100% - 40px);
   min-height: 0;
   margin: 0 auto;
@@ -384,7 +376,7 @@ body {
   justify-content: flex-start;
   gap: 14px;
 
-  width: min(100%, 720px);
+  width: 100%;
   min-height: 18px;
   margin: 3px auto 0;
 
@@ -428,7 +420,7 @@ body {
 
   .dashboard-layout {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto;
     height: auto;
   }
 
@@ -440,23 +432,13 @@ body {
   }
 
   .metric-column {
-    grid-column: 1;
+    grid-column: 1 / 3;
     grid-row: 2;
   }
 
-  .metric-column + .metric-column {
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  .chart-left {
+  .chart-section {
     grid-column: 1 / 3;
     grid-row: 3;
-  }
-
-  .chart-right {
-    grid-column: 1 / 3;
-    grid-row: 4;
   }
 
   .chart-section {

@@ -209,16 +209,12 @@ function latestBySystem(map) {
   return result;
 }
 
-function formatSeconds(value) {
+function formatPercent(value) {
   if (!Number.isFinite(value)) {
     return "--";
   }
 
-  if (value < 1) {
-    return value.toFixed(2);
-  }
-
-  return value.toFixed(1);
+  return (value * 100).toFixed(0);
 }
 
 function setImprovement(valueId, detailId, value, frames) {
@@ -307,7 +303,7 @@ function buildBars(containerId, currentValues) {
     valueNode.className = "lcd-value";
     valueNode.style.setProperty("--bar-color", BAR_COLORS[system]);
     valueNode.innerHTML =
-      `${formatSeconds(value)}<span class="lcd-unit">s</span>`;
+      `${formatPercent(value)}<span class="lcd-unit">%</span>`;
 
     row.append(name, track, valueNode);
     container.appendChild(row);
@@ -417,7 +413,9 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
     ...allPoints.map((point) => point.value)
   );
 
-  const yMaximum = niceMaximum(maximumObserved * 1.08);
+  // Ratios never exceed 1 (100%) -- clamp so a noisy sample near the ceiling
+  // can't push the axis past 100%.
+  const yMaximum = Math.min(1, niceMaximum(maximumObserved * 1.08));
   const timeRange = Math.max(1, maximumTime - minimumTime);
 
   const xScale = (time) =>
@@ -458,20 +456,10 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
 
   svg.appendChild(defs);
 
-  function niceTickStep(max) {
-    if (max <= 3) return 0.5;
-    if (max <= 8) return 1;
-    const raw = max / 6;
-    const exp = Math.floor(Math.log10(raw));
-    const mag = 10 ** exp;
-    const norm = raw / mag;
-    if (norm <= 1) return mag;
-    if (norm <= 2) return 2 * mag;
-    if (norm <= 5) return 5 * mag;
-    return 10 * mag;
-  }
-
-  const tickStep = niceTickStep(yMaximum);
+  // Ratios always live in [0, 1], so a fixed 20-point step (five bands) reads
+  // better than the latency-oriented magnitude search this shares its origin
+  // with in the sibling slide's chart builder.
+  const tickStep = 0.2;
 
   for (let value = 0; value <= yMaximum; value = +(value + tickStep).toFixed(2)) {
     const y = yScale(value);
@@ -493,7 +481,7 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
       "font-size": 12,
     });
 
-    label.textContent = `${value % 1 === 0 ? value.toFixed(0) : value.toFixed(1)} s`;
+    label.textContent = `${formatPercent(value)}%`;
 
     svg.append(gridLine, label);
   }
@@ -632,44 +620,25 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
   });
 }
 
-const ttftImprovementFrames = framesForRef("A");
-const e2eImprovementFrames = framesForRef("B");
-
-const ttftImprovement = latestFromFrames(ttftImprovementFrames);
-const e2eImprovement = latestFromFrames(e2eImprovementFrames);
+const cacheImprovementFrames = framesForRef("A");
+const cacheImprovement = latestFromFrames(cacheImprovementFrames);
 
 setImprovement(
-  "ttft-improvement",
-  "ttft-improvement-detail",
-  ttftImprovement,
-  ttftImprovementFrames
+  "cache-improvement",
+  "cache-improvement-detail",
+  cacheImprovement,
+  cacheImprovementFrames
 );
 
-setImprovement(
-  "e2e-improvement",
-  "e2e-improvement-detail",
-  e2eImprovement,
-  e2eImprovementFrames
-);
+const cacheSeries = seriesMap(framesForRef("B"));
 
-const ttftSeries = seriesMap(framesForRef("C"));
-const e2eSeries = seriesMap(framesForRef("D"));
-
-buildBars("ttft-bars", latestBySystem(ttftSeries));
-buildBars("e2e-bars", latestBySystem(e2eSeries));
+buildBars("cache-bars", latestBySystem(cacheSeries));
 
 buildChart(
-  "ttft-chart",
-  "ttft-legend",
-  ttftSeries,
-  "Mean TTFT (seconds)"
-);
-
-buildChart(
-  "e2e-chart",
-  "e2e-legend",
-  e2eSeries,
-  "Mean E2E latency (seconds)"
+  "cache-chart",
+  "cache-legend",
+  cacheSeries,
+  "External prefix cache hit ratio"
 );
 
 const updated = root.getElementById("last-updated");

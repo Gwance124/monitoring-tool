@@ -1,0 +1,744 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Elapsed-time overlay of isolated ReAct serving benchmark runs. Saved CSV runs are replayed in lock-step through Prometheus.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 25,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 10,
+      "links": [],
+      "title": "",
+      "type": "gapit-htmlgraphics-panel",
+      "transparent": false,
+      "options": {
+        "SVGBaseFix": true,
+        "add100Percentage": true,
+        "calcsMutation": "standard",
+        "centerAlignContent": true,
+        "codeData": "{\"text\": \"Random text\"}",
+        "css": ":root {\n  --mars: #f04438;\n  --lmcache: #3b82f6;\n  --mooncake: #9b6cff;\n  --recompute: #9ca3af;\n\n  --text-primary: #f5f7fa;\n  --text-secondary: #b6bac3;\n  --text-muted: #777d88;\n}\n\nhtml,\nbody {\n  width: 100%;\n  height: 100%;\n  margin: 0;\n  overflow: hidden;\n}\n\n.benchmark-slide {\n  position: relative;\n  box-sizing: border-box;\n  width: 100%;\n  height: 100%;\n  min-height: 800px;\n  height: 100%;\n  overflow: hidden;\n  padding: 20px 34px 18px;\n\n  color: var(--text-primary);\n  font-family: Inter, Roboto, \"Helvetica Neue\", Arial, sans-serif;\n\n  background:\n    radial-gradient(\n      circle at 10% 38%,\n      rgba(255, 255, 255, 0.035),\n      transparent 36%\n    ),\n    linear-gradient(\n      100deg,\n      #292929 0%,\n      #1d1d1d 31%,\n      #101010 68%,\n      #050505 100%\n    );\n}\n\n.top-left-logo {\n  position: absolute;\n  top: 10px;\n  left: 120px;\n  z-index: 5;\n  width: 120px;\n  height: auto;\n  object-fit: contain;\n}\n\n.bottom-left-image {\n  grid-column: 1 / span 2;\n  grid-row: 2;\n\n  display: flex;\n  align-items: center;\n  justify-content: center;\n\n  min-width: 0;\n  min-height: 0;\n  padding: 20px;\n}\n\n.bottom-left-image img {\n  display: block;\n  width: auto;\n  height: auto;\n\n  max-width: 320px;\n\n  object-fit: contain;\n}\n\n.bottom-left-image,\n.bottom-left-image img {\n  background: transparent !important;\n}\n\n.corner-decoration {\n  position: absolute;\n  top: -8px;\n  right: -20px;\n  width: 360px;\n  height: 100px;\n  overflow: hidden;\n  opacity: 0.55;\n  pointer-events: none;\n}\n\n.corner-decoration span {\n  position: absolute;\n  right: 0;\n  height: 14px;\n  background:\n    linear-gradient(\n      90deg,\n      transparent,\n      rgba(220, 38, 38, 0.65),\n      rgba(127, 29, 29, 0.2)\n    );\n  transform: skewX(36deg);\n  transform-origin: right center;\n}\n\n.corner-decoration span:nth-child(1) {\n  top: 3px;\n  width: 310px;\n}\n\n.corner-decoration span:nth-child(2) {\n  top: 22px;\n  width: 265px;\n}\n\n.corner-decoration span:nth-child(3) {\n  top: 41px;\n  width: 220px;\n}\n\n.corner-decoration span:nth-child(4) {\n  top: 60px;\n  width: 175px;\n}\n\n.slide-header {\n  position: relative;\n  z-index: 2;\n  height: 82px;\n}\n\n.slide-header h1 {\n  margin: 0;\n  text-align: center;\n  font-family: \"Roboto Mono\", \"IBM Plex Mono\", Consolas, monospace;\n  font-size: clamp(29px, 3.0vw, 52px);\n  font-weight: 800;\n  letter-spacing: 1.5px;\n  line-height: 1.15;\n}\n\n.title-accent {\n  margin-right: 14px;\n  color: #ef233c;\n}\n\n.title-main {\n  color: transparent;\n  background: linear-gradient(90deg, #ef4444, #ff8a24);\n  background-clip: text;\n  -webkit-background-clip: text;\n}\n\n.title-rule {\n  position: absolute;\n  right: -34px;\n  bottom: 3px;\n  left: -34px;\n  height: 2px;\n  background: rgba(255, 255, 255, 0.12);\n}\n\n/*\n * One metric column/chart pair for now, filling the row -- a second pair\n * squishes both to half-width automatically (see .metric-column,\n * .chart-section below).\n */\n.dashboard-layout {\n  display: grid;\n  grid-template-columns: repeat(12, minmax(0, 1fr));\n  grid-template-rows: 305px minmax(0, 1fr);\n  column-gap: 28px;\n  row-gap: 18px;\n  height: calc(100% - 128px);\n  min-height: 0;\n  padding-top: 14px;\n}\n\n.summary-column {\n  grid-column: 1 / span 2;\n  grid-row: 1;\n\n  display: flex;\n  flex-direction: column;\n  justify-content: flex-start;\n  gap: 20px;\n\n  min-width: 0;\n  padding: 12px 4px 0 8px;\n}\n\n.summary-block {\n  min-width: 0;\n}\n\n.summary-label {\n  margin-bottom: 4px;\n  color: var(--text-primary);\n  font-size: clamp(17px, 1.25vw, 24px);\n  font-weight: 750;\n  line-height: 1.08;\n}\n\n.summary-value,\n.summary-value.small {\n  color: #ff922b;\n  font-size: clamp(46px, 3.9vw, 72px);\n  font-weight: 400;\n  letter-spacing: -3px;\n  line-height: 0.94;\n  white-space: nowrap;\n}\n\n.percent-symbol {\n  margin-left: 3px;\n  font-size: 0.5em;\n  font-weight: 550;\n  letter-spacing: 0;\n}\n\n.summary-detail {\n  max-width: 190px;\n  margin-top: 6px;\n  color: var(--text-secondary);\n  font-size: 11px;\n  line-height: 1.25;\n}\n\n/*\n * A metric's bars (row 1) and its chart (row 2) share the same column span\n * -- stacked, not diagonal. With only one metric this column fills the\n * whole width; adding a second .metric-column + .chart-section pair (like\n * slide one's TTFT/e2e split) automatically squishes both to half-width,\n * no other changes needed.\n */\n.metric-column,\n.chart-section {\n  grid-column: 3 / span 10;\n}\n\n.metric-column:has(+ .metric-column),\n.chart-section:has(+ .chart-section) {\n  grid-column: 3 / span 5;\n}\n\n.metric-column + .metric-column,\n.chart-section + .chart-section {\n  grid-column: 8 / span 5;\n}\n\n.metric-column {\n  grid-row: 1;\n  min-width: 0;\n  padding-top: 8px;\n}\n\n.metric-column h2,\n.chart-section h2 {\n  margin: 0;\n  color: #fff;\n  font-size: clamp(21px, 1.6vw, 30px);\n  font-weight: 750;\n  text-align: center;\n}\n\n.metric-subtitle {\n  margin-top: 4px;\n  color: var(--text-secondary);\n  font-size: 12px;\n  text-align: center;\n}\n\n.lcd-bar-group {\n  display: flex;\n  flex-direction: column;\n  gap: 13px;\n  width: 100%;\n  margin-top: 21px;\n}\n\n.lcd-row {\n  display: grid;\n  grid-template-columns: 112px minmax(0, 1fr) 74px;\n  align-items: center;\n  gap: 11px;\n  width: 100%;\n  min-width: 0;\n}\n\n.lcd-name {\n  overflow: hidden;\n  color: var(--text-secondary);\n  font-size: clamp(14px, 1vw, 19px);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n\n.lcd-name.is-mars {\n  color: #fff;\n  font-weight: 650;\n}\n\n.lcd-track {\n  display: grid;\n  grid-template-columns: repeat(30, minmax(0, 1fr));\n  gap: 3px;\n  width: 100%;\n  min-width: 0;\n  height: 32px;\n}\n\n.lcd-segment {\n  height: 100%;\n  border-radius: 1px;\n  background: rgba(255, 255, 255, 0.065);\n  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025);\n}\n\n.lcd-segment.active {\n  background: var(--bar-color);\n  box-shadow:\n    0 0 5px color-mix(in srgb, var(--bar-color), transparent 55%),\n    inset 0 0 5px rgba(255, 255, 255, 0.14);\n}\n\n.lcd-value {\n  color: var(--bar-color);\n  font-size: clamp(14px, 1.05vw, 20px);\n  text-align: right;\n  white-space: nowrap;\n}\n\n.lcd-unit {\n  margin-left: 3px;\n  font-size: 0.62em;\n}\n\n.chart-section {\n  grid-row: 2;\n  min-width: 0;\n  min-height: 0;\n\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n}\n\n.chart-section h2 {\n  width: 100%;\n  margin-bottom: 8px;\n}\n\n.chart-shell {\n  width: 100%;\n  height: calc(100% - 40px);\n  min-height: 0;\n  margin: 0 auto;\n}\n\n.live-chart {\n  display: block;\n  width: 100%;\n  height: 100%;\n  overflow: visible;\n}\n\n.chart-legend {\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-start;\n  gap: 14px;\n\n  width: 100%;\n  min-height: 18px;\n  margin: 3px auto 0;\n\n  color: var(--text-secondary);\n  font-size: 11px;\n}\n\n.legend-entry {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n\n.legend-swatch {\n  width: 15px;\n  height: 3px;\n  border-radius: 999px;\n  background: var(--legend-color);\n}\n\n.slide-footer {\n  position: absolute;\n  right: 34px;\n  bottom: 7px;\n  left: 34px;\n\n  display: flex;\n  justify-content: space-between;\n\n  color: rgba(255, 255, 255, 0.34);\n  font-size: 12px;\n  letter-spacing: 0.35px;\n  text-transform: uppercase;\n}\n\n@media (max-width: 1150px) {\n  .benchmark-slide {\n    min-height: 1100px;\n    overflow: auto;\n  }\n\n  .dashboard-layout {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n    grid-template-rows: auto auto auto;\n    height: auto;\n  }\n\n  .summary-column {\n    grid-column: 1 / 3;\n    grid-row: 1;\n    flex-direction: row;\n    justify-content: space-around;\n  }\n\n  .metric-column {\n    grid-column: 1 / 3;\n    grid-row: 2;\n  }\n\n  .chart-section {\n    grid-column: 1 / 3;\n    grid-row: 3;\n  }\n\n  .chart-section {\n    min-height: 360px;\n  }\n\n  .chart-shell,\n  .chart-legend {\n    width: min(100%, 800px);\n  }\n}\n",
+        "dynamicData": false,
+        "dynamicFieldDisplayValues": false,
+        "dynamicHtmlGraphics": false,
+        "dynamicProps": false,
+        "html": "<div class=\"benchmark-slide\">\n  <img\n    class=\"top-left-logo\"\n    src=\"/public/img/custom/SK_Hynix.svg.webp\"\n    alt=\"SK hynix\"\n  />\n\n  <div class=\"corner-decoration\" aria-hidden=\"true\">\n    <span></span>\n    <span></span>\n    <span></span>\n    <span></span>\n  </div>\n\n  <header class=\"slide-header\">\n    <h1>\n      <span class=\"title-accent\">ReAct</span>\n      <span class=\"title-main\">(Reasoning & Acting) AI Agent Serving</span>\n    </h1>\n    <div class=\"title-rule\"></div>\n  </header>\n\n  <main class=\"dashboard-layout\">\n    <div class=\"bottom-left-image\">\n      <img\n        src=\"/public/img/custom/server.png?v=3\"\n        alt=\"System architecture\"\n      />\n    </div>\n    <section class=\"summary-column\">\n      <div class=\"summary-block\">\n        <div class=\"summary-label\">Cache hit ratio<br />advantage</div>\n        <div class=\"summary-value\">\n          <span id=\"cache-improvement\">--</span><span class=\"percent-symbol\">%</span>\n        </div>\n        <div id=\"cache-improvement-detail\" class=\"summary-detail\">\n          MARS compared with second-best system\n        </div>\n      </div>\n    </section>\n\n    <section class=\"metric-column\">\n      <h2>Current Cache Hit Ratio</h2>\n      <div class=\"metric-subtitle\">Higher is better</div>\n\n      <div id=\"cache-bars\" class=\"lcd-bar-group\"></div>\n    </section>\n\n    <!--\n      Only one metric-column/chart-section pair for now, so both fill the\n      whole row. Adding a second pair (same classes, same order as slide\n      one's TTFT/e2e split) auto-squishes both to half-width -- see the\n      panel.css comment above .metric-column, .chart-section.\n    -->\n    <section class=\"chart-section\">\n      <h2>External Prefix Cache Hit Ratio</h2>\n      <div class=\"chart-shell\">\n        <svg\n          id=\"cache-chart\"\n          class=\"live-chart\"\n          preserveAspectRatio=\"xMidYMid meet\"\n          role=\"img\"\n          aria-label=\"Cache hit ratio by serving system\"\n        ></svg>\n      </div>\n      <div id=\"cache-legend\" class=\"chart-legend\"></div>\n    </section>\n  </main>\n\n  <footer class=\"slide-footer\">\n    <span id=\"last-updated\">Awaiting data</span>\n  </footer>\n</div>\n",
+        "onInit": "",
+        "onInitOnResize": false,
+        "onRender": "const root = htmlNode;\n\nconst COLORS = {\n  mars: \"#f04438\",\n  lmcache: \"#3b82f6\",\n  mooncake: \"#9b6cff\",\n  recompute: \"#9ca3af\",\n};\n\nconst BAR_COLORS = {\n  mars: \"#f04438\",\n  lmcache: \"#9ca3af\",\n  mooncake: \"#9ca3af\",\n  recompute: \"#9ca3af\",\n};\n\nconst DISPLAY_NAMES = {\n  mars: \"MARS\",\n  lmcache: \"LMCache\",\n  mooncake: \"Mooncake\",\n  recompute: \"Recomputation\",\n};\n\nconst ORDER = [\"mars\", \"lmcache\", \"mooncake\", \"recompute\"];\n\nfunction valuesToArray(values) {\n  if (!values) {\n    return [];\n  }\n\n  if (Array.isArray(values)) {\n    return values;\n  }\n\n  if (typeof values.toArray === \"function\") {\n    return values.toArray();\n  }\n\n  if (typeof values.length === \"number\") {\n    const output = [];\n\n    for (let index = 0; index < values.length; index += 1) {\n      output.push(\n        typeof values.get === \"function\"\n          ? values.get(index)\n          : values[index]\n      );\n    }\n\n    return output;\n  }\n\n  return [];\n}\n\nfunction finiteNumber(value) {\n  const parsed = Number(value);\n  return Number.isFinite(parsed) ? parsed : null;\n}\n\nfunction getField(frame, type) {\n  if (!frame || !Array.isArray(frame.fields)) {\n    return null;\n  }\n\n  if (type === \"time\") {\n    return (\n      frame.fields.find((field) => field.type === \"time\") ||\n      frame.fields.find((field) =>\n        String(field.name || \"\").toLowerCase().includes(\"time\")\n      )\n    );\n  }\n\n  return (\n    frame.fields.find(\n      (field) =>\n        field.type === \"number\" &&\n        String(field.name || \"\").toLowerCase() !== \"time\"\n    ) ||\n    frame.fields.find((field) => field.type === \"number\")\n  );\n}\n\nfunction getSystem(frame) {\n  const numericField = getField(frame, \"number\");\n\n  const candidates = [\n    numericField?.labels?.system,\n    frame?.labels?.system,\n    frame?.name,\n  ];\n\n  for (const candidate of candidates) {\n    if (!candidate) {\n      continue;\n    }\n\n    const normalized = String(candidate).trim().toLowerCase();\n\n    if (ORDER.includes(normalized)) {\n      return normalized;\n    }\n\n    for (const system of ORDER) {\n      if (normalized.includes(system)) {\n        return system;\n      }\n    }\n  }\n\n  return null;\n}\n\nfunction getRefId(frame) {\n  return String(\n    frame?.refId ||\n      frame?.meta?.refId ||\n      frame?.meta?.custom?.refId ||\n      \"\"\n  ).toUpperCase();\n}\n\nfunction framesForRef(refId) {\n  return (data?.series || []).filter(\n    (frame) => getRefId(frame) === refId.toUpperCase()\n  );\n}\n\nfunction lastFinite(values) {\n  const array = valuesToArray(values);\n\n  for (let index = array.length - 1; index >= 0; index -= 1) {\n    const value = finiteNumber(array[index]);\n\n    if (value !== null) {\n      return value;\n    }\n  }\n\n  return null;\n}\n\nfunction latestFromFrames(frames) {\n  for (const frame of frames) {\n    const numberField = getField(frame, \"number\");\n\n    if (!numberField) {\n      continue;\n    }\n\n    const value = lastFinite(numberField.values);\n\n    if (value !== null) {\n      return value;\n    }\n  }\n\n  return null;\n}\n\nfunction seriesMap(frames) {\n  const result = {};\n\n  frames.forEach((frame) => {\n    const system = getSystem(frame);\n    const timeField = getField(frame, \"time\");\n    const numberField = getField(frame, \"number\");\n\n    if (!system || !numberField) {\n      return;\n    }\n\n    const rawValues = valuesToArray(numberField.values);\n    const rawTimes = timeField\n      ? valuesToArray(timeField.values)\n      : rawValues.map((_, index) => index);\n\n    const points = [];\n\n    for (let index = 0; index < rawValues.length; index += 1) {\n      const value = finiteNumber(rawValues[index]);\n      const time = finiteNumber(rawTimes[index]);\n\n      if (value !== null && time !== null) {\n        points.push({ time, value });\n      }\n    }\n\n    if (points.length > 0) {\n      result[system] = points;\n    }\n  });\n\n  return result;\n}\n\nfunction latestBySystem(map) {\n  const result = {};\n\n  ORDER.forEach((system) => {\n    const points = map[system] || [];\n\n    if (points.length > 0) {\n      result[system] = points[points.length - 1].value;\n    }\n  });\n\n  return result;\n}\n\nfunction formatPercent(value) {\n  if (!Number.isFinite(value)) {\n    return \"--\";\n  }\n\n  return (value * 100).toFixed(0);\n}\n\nfunction setImprovement(valueId, detailId, value, frames) {\n  const valueNode = root.getElementById(valueId);\n  const detailNode = root.getElementById(detailId);\n\n  if (!valueNode) {\n    return;\n  }\n\n  if (!Number.isFinite(value)) {\n    valueNode.textContent = \"--\";\n    return;\n  }\n\n  valueNode.textContent = (value * 100).toFixed(1);\n\n  const numericField = frames\n    .map((frame) => getField(frame, \"number\"))\n    .find(Boolean);\n\n  const secondBest =\n    numericField?.labels?.second_best ||\n    frames[0]?.labels?.second_best;\n\n  if (detailNode && secondBest) {\n    detailNode.textContent =\n      `( MARS compared with ${DISPLAY_NAMES[secondBest] || secondBest} )`;\n  }\n}\n\nfunction buildBars(containerId, currentValues) {\n  const container = root.getElementById(containerId);\n\n  if (!container) {\n    return;\n  }\n\n  container.replaceChildren();\n\n  const availableValues = Object.values(currentValues).filter(Number.isFinite);\n\n  if (availableValues.length === 0) {\n    container.textContent = \"Awaiting Prometheus data\";\n    return;\n  }\n\n  const maximum = Math.max(...availableValues) * 1.08;\n  const segmentCount = 30;\n\n  ORDER.forEach((system) => {\n    const value = currentValues[system];\n\n    if (!Number.isFinite(value)) {\n      return;\n    }\n\n    const row = document.createElement(\"div\");\n    row.className = \"lcd-row\";\n\n    const name = document.createElement(\"div\");\n    name.className = `lcd-name ${system === \"mars\" ? \"is-mars\" : \"\"}`;\n    name.textContent = DISPLAY_NAMES[system];\n\n    const track = document.createElement(\"div\");\n    track.className = \"lcd-track\";\n    track.style.setProperty(\"--bar-color\", BAR_COLORS[system]);\n\n    const activeSegments = Math.max(\n      1,\n      Math.round((value / maximum) * segmentCount)\n    );\n\n    for (let index = 0; index < segmentCount; index += 1) {\n      const segment = document.createElement(\"span\");\n\n      segment.className =\n        index < activeSegments\n          ? \"lcd-segment active\"\n          : \"lcd-segment\";\n\n      track.appendChild(segment);\n    }\n\n    const valueNode = document.createElement(\"div\");\n    valueNode.className = \"lcd-value\";\n    valueNode.style.setProperty(\"--bar-color\", BAR_COLORS[system]);\n    valueNode.innerHTML =\n      `${formatPercent(value)}<span class=\"lcd-unit\">%</span>`;\n\n    row.append(name, track, valueNode);\n    container.appendChild(row);\n  });\n}\n\nfunction svgElement(tag, attributes = {}) {\n  const node = document.createElementNS(\n    \"http://www.w3.org/2000/svg\",\n    tag\n  );\n\n  Object.entries(attributes).forEach(([key, value]) => {\n    node.setAttribute(key, String(value));\n  });\n\n  return node;\n}\n\nfunction niceMaximum(value) {\n  if (!Number.isFinite(value) || value <= 0) {\n    return 1;\n  }\n\n  const exponent = Math.floor(Math.log10(value));\n  const magnitude = 10 ** exponent;\n  const normalized = value / magnitude;\n\n  let rounded;\n\n  if (normalized <= 1) {\n    rounded = 1;\n  } else if (normalized <= 1.5) {\n    rounded = 1.5;\n  } else if (normalized <= 2) {\n    rounded = 2;\n  } else if (normalized <= 3) {\n    rounded = 3;\n  } else if (normalized <= 4) {\n    rounded = 4;\n  } else if (normalized <= 5) {\n    rounded = 5;\n  } else if (normalized <= 6) {\n    rounded = 6;\n  } else if (normalized <= 8) {\n    rounded = 8;\n  } else {\n    rounded = 10;\n  }\n\n  return rounded * magnitude;\n}\n\nfunction buildChart(svgId, legendId, series, yAxisTitle) {\n  const svg = root.getElementById(svgId);\n  const legend = root.getElementById(legendId);\n\n  if (!svg || !legend) {\n    return;\n  }\n\n  svg.replaceChildren();\n  legend.replaceChildren();\n\n  const container = svg.parentElement;\n  const rect = container ? container.getBoundingClientRect() : null;\n  const width = rect && rect.width > 100 ? Math.round(rect.width) : 760;\n  const height = rect && rect.height > 100 ? Math.round(rect.height) : 300;\n\n  svg.setAttribute(\"viewBox\", `0 0 ${width} ${height}`);\n\n  const margin = {\n    top: 12,\n    right: 14,\n    bottom: 34,\n    left: 68,\n  };\n\n  const plotWidth = width - margin.left - margin.right;\n  const plotHeight = height - margin.top - margin.bottom;\n\n  const allPoints = Object.values(series).flat();\n\n  if (allPoints.length === 0) {\n    const message = svgElement(\"text\", {\n      x: width / 2,\n      y: height / 2,\n      \"text-anchor\": \"middle\",\n      fill: \"rgba(255,255,255,0.45)\",\n      \"font-size\": 15,\n    });\n\n    message.textContent = \"Awaiting Prometheus data\";\n    svg.appendChild(message);\n    return;\n  }\n\n  const minimumTime = Math.min(\n    ...allPoints.map((point) => point.time)\n  );\n\n  const maximumTime = Math.max(\n    ...allPoints.map((point) => point.time)\n  );\n\n  const maximumObserved = Math.max(\n    ...allPoints.map((point) => point.value)\n  );\n\n  // Ratios never exceed 1 (100%) -- clamp so a noisy sample near the ceiling\n  // can't push the axis past 100%.\n  const yMaximum = Math.min(1, niceMaximum(maximumObserved * 1.08));\n  const timeRange = Math.max(1, maximumTime - minimumTime);\n\n  const xScale = (time) =>\n    margin.left +\n    ((time - minimumTime) / timeRange) * plotWidth;\n\n  const yScale = (value) =>\n    margin.top +\n    plotHeight -\n    (value / yMaximum) * plotHeight;\n\n  const defs = svgElement(\"defs\");\n\n  ORDER.forEach((system) => {\n    const gradient = svgElement(\"linearGradient\", {\n      id: `${svgId}-${system}-gradient`,\n      x1: \"0\",\n      y1: \"0\",\n      x2: \"0\",\n      y2: \"1\",\n    });\n\n    const topStop = svgElement(\"stop\", {\n      offset: \"0%\",\n      \"stop-color\": COLORS[system],\n      \"stop-opacity\": system === \"mars\" ? \"0.26\" : \"0.08\",\n    });\n\n    const bottomStop = svgElement(\"stop\", {\n      offset: \"100%\",\n      \"stop-color\": COLORS[system],\n      \"stop-opacity\": \"0\",\n    });\n\n    gradient.append(topStop, bottomStop);\n    defs.appendChild(gradient);\n  });\n\n  svg.appendChild(defs);\n\n  // Ratios always live in [0, 1], so a fixed 20-point step (five bands) reads\n  // better than the latency-oriented magnitude search this shares its origin\n  // with in the sibling slide's chart builder.\n  const tickStep = 0.2;\n\n  for (let value = 0; value <= yMaximum; value = +(value + tickStep).toFixed(2)) {\n    const y = yScale(value);\n\n    const gridLine = svgElement(\"line\", {\n      x1: margin.left,\n      y1: y,\n      x2: width - margin.right,\n      y2: y,\n      stroke: \"rgba(255,255,255,0.09)\",\n      \"stroke-width\": 1,\n    });\n\n    const label = svgElement(\"text\", {\n      x: margin.left - 9,\n      y: y + 4,\n      \"text-anchor\": \"end\",\n      fill: \"rgba(255,255,255,0.53)\",\n      \"font-size\": 12,\n    });\n\n    label.textContent = `${formatPercent(value)}%`;\n\n    svg.append(gridLine, label);\n  }\n\n  const verticalTicks = 6;\n\n  for (let index = 0; index <= verticalTicks; index += 1) {\n    const fraction = index / verticalTicks;\n    const x = margin.left + fraction * plotWidth;\n    const timestamp = minimumTime + fraction * timeRange;\n\n    const gridLine = svgElement(\"line\", {\n      x1: x,\n      y1: margin.top,\n      x2: x,\n      y2: margin.top + plotHeight,\n      stroke: \"rgba(255,255,255,0.055)\",\n      \"stroke-width\": 1,\n    });\n\n    const label = svgElement(\"text\", {\n      x,\n      y: height - 12,\n      \"text-anchor\": \"middle\",\n      fill: \"rgba(255,255,255,0.48)\",\n      \"font-size\": 9,\n    });\n\n    const date = new Date(timestamp);\n\n    label.textContent = Number.isNaN(date.getTime())\n      ? \"\"\n      : date.toLocaleTimeString([], {\n          hour: \"2-digit\",\n          minute: \"2-digit\",\n          second: \"2-digit\",\n        });\n\n    svg.append(gridLine, label);\n  }\n\n  const axisTitle = svgElement(\"text\", {\n    x: 15,\n    y: height / 2,\n    transform: `rotate(-90 15 ${height / 2})`,\n    \"text-anchor\": \"middle\",\n    fill: \"rgba(255,255,255,0.58)\",\n    \"font-size\": 12,\n  });\n\n  axisTitle.textContent = yAxisTitle;\n  svg.appendChild(axisTitle);\n\n  const drawingOrder = [\n    \"recompute\",\n    \"lmcache\",\n    \"mooncake\",\n    \"mars\",\n  ];\n\n  drawingOrder.forEach((system) => {\n    const points = series[system];\n\n    if (!points || points.length === 0) {\n      return;\n    }\n\n    const lineCoordinates = points\n      .map(\n        (point) =>\n          `${xScale(point.time).toFixed(2)},${yScale(point.value).toFixed(2)}`\n      )\n      .join(\" \");\n\n    const areaCoordinates = [\n      `${xScale(points[0].time)},${margin.top + plotHeight}`,\n      lineCoordinates,\n      `${xScale(points[points.length - 1].time)},${margin.top + plotHeight}`,\n    ].join(\" \");\n\n    const area = svgElement(\"polygon\", {\n      points: areaCoordinates,\n      fill: `url(#${svgId}-${system}-gradient)`,\n      stroke: \"none\",\n    });\n\n    const line = svgElement(\"polyline\", {\n      points: lineCoordinates,\n      fill: \"none\",\n      stroke: COLORS[system],\n      \"stroke-width\": system === \"mars\" ? 3.2 : 2,\n      \"stroke-linejoin\": \"round\",\n      \"stroke-linecap\": \"round\",\n      opacity: system === \"mars\" ? 1 : 0.82,\n    });\n\n    svg.append(area, line);\n\n    const samplingStep = Math.max(\n      1,\n      Math.ceil(points.length / 20)\n    );\n\n    points.forEach((point, index) => {\n      if (\n        index % samplingStep !== 0 &&\n        index !== points.length - 1\n      ) {\n        return;\n      }\n\n      const circle = svgElement(\"circle\", {\n        cx: xScale(point.time),\n        cy: yScale(point.value),\n        r: system === \"mars\" ? 3.2 : 2.4,\n        fill: COLORS[system],\n        stroke: \"rgba(255,255,255,0.28)\",\n        \"stroke-width\": 0.7,\n      });\n\n      svg.appendChild(circle);\n    });\n\n    const legendEntry = document.createElement(\"span\");\n    legendEntry.className = \"legend-entry\";\n\n    const swatch = document.createElement(\"span\");\n    swatch.className = \"legend-swatch\";\n    swatch.style.setProperty(\"--legend-color\", COLORS[system]);\n\n    const label = document.createElement(\"span\");\n    label.textContent = DISPLAY_NAMES[system];\n\n    legendEntry.append(swatch, label);\n    legend.appendChild(legendEntry);\n  });\n}\n\nconst cacheImprovementFrames = framesForRef(\"A\");\nconst cacheImprovement = latestFromFrames(cacheImprovementFrames);\n\nsetImprovement(\n  \"cache-improvement\",\n  \"cache-improvement-detail\",\n  cacheImprovement,\n  cacheImprovementFrames\n);\n\nconst cacheSeries = seriesMap(framesForRef(\"B\"));\n\nbuildBars(\"cache-bars\", latestBySystem(cacheSeries));\n\nbuildChart(\n  \"cache-chart\",\n  \"cache-legend\",\n  cacheSeries,\n  \"External prefix cache hit ratio\"\n);\n\nconst updated = root.getElementById(\"last-updated\");\n\nif (updated) {\n  updated.textContent =\n    `Updated ${new Date().toLocaleTimeString()}`;\n}\n",
+        "overflow": "visible",
+        "panelupdateOnMount": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull",
+            "last",
+            "firstNotNull",
+            "first",
+            "min",
+            "max",
+            "mean",
+            "sum",
+            "count",
+            "range",
+            "delta",
+            "step",
+            "diff",
+            "logmin",
+            "allIsZero",
+            "allIsNull",
+            "diffperc"
+          ]
+        },
+        "renderOnMount": true,
+        "rootCSS": "",
+        "useGrafanaScrollbar": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_improvement_fraction",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{second_best}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_ratio",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Live fraction: (MARS cache hit ratio - second-best non-MARS cache hit ratio) / second-best non-MARS cache hit ratio.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "transparent",
+            "mode": "fixed"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.2",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_improvement_fraction",
+          "legendFormat": "(MARS - {{second_best}}) / {{second_best}}",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        }
+      ],
+      "title": "MARS cache hit ratio advantage",
+      "type": "stat",
+      "transparent": true
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mars"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#dc2626",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "lmcache"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mooncake"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "recompute"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#94a3b8",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "id": 6,
+      "options": {
+        "displayMode": "lcd",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        }
+      },
+      "pluginVersion": "13.0.2",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_ratio{system=\"mars\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_ratio{system=\"lmcache\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "B",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_ratio{system=\"mooncake\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "C",
+          "interval": "1s"
+        },
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_ratio{system=\"recompute\"}",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "D",
+          "interval": "1s"
+        }
+      ],
+      "title": "Current cache hit ratio",
+      "type": "bargauge",
+      "transparent": true
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Cache hit ratio",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "axisBorderShow": false,
+            "barWidthFactor": 0.6,
+            "showValues": false
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "elapsed_seconds"
+            },
+            "properties": [
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 300
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Seconds since test start"
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "MARS",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#dc2626",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LMCache",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#2563eb",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mooncake",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#7c3aed",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Recomputation",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#64748b",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "asc",
+          "hideZeros": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_ratio",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        }
+      ],
+      "title": "Cache hit ratio — elapsed-time overlay",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^mars$",
+            "renamePattern": "MARS"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^recompute$",
+            "renamePattern": "Recomputation"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^mooncake$",
+            "renamePattern": "Mooncake"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^lmcache$",
+            "renamePattern": "LMCache"
+          }
+        }
+      ],
+      "type": "timeseries",
+      "transparent": true,
+      "pluginVersion": "13.0.2"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "max": 300,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 295
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 46
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_elapsed_seconds",
+          "legendFormat": "seconds since test start",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        }
+      ],
+      "title": "Replay position",
+      "type": "stat",
+      "transparent": true
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "The fill and numeric label advance from 0 to the final normalized test second.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#14b8a6",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "max": 300,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
+      "id": 9,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 80,
+        "minVizHeight": 24,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "text",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "react_benchmark_elapsed_seconds",
+          "legendFormat": "Replay progress",
+          "range": true,
+          "refId": "A",
+          "interval": "1s"
+        }
+      ],
+      "title": "Normalized test time — final value 300 seconds",
+      "type": "bargauge",
+      "transparent": true,
+      "pluginVersion": "13.0.2"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "react",
+    "vllm",
+    "benchmark",
+    "cxl"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "ReAct Serving Benchmark Comparison — Cache Hit Ratio",
+  "uid": "react-serving-benchmark-cache",
+  "version": 1,
+  "weekStart": ""
+}

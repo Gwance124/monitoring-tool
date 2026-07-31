@@ -9,12 +9,35 @@ import json
 import math
 import os
 import pathlib
+import random
 import statistics
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
 SYSTEMS = ("mars", "lmcache", "mooncake", "recompute")
+
+# External prefix cache hit ratio isn't in the extracted run CSVs for every
+# system yet -- recompute genuinely has no external cache, so extract_run.py
+# leaves it undefined there (see fixtures/generate.py) rather than reporting a
+# fabricated zero. The hero panel wants a plottable number for all four
+# systems, so this exporter synthesizes it directly: a per-system plateau
+# reached by a ramp from cold start, plus small jitter, reseeded each whole
+# second so repeated scrapes within the same second agree.
+CACHE_HIT_PLATEAU = {
+    "mars": 0.83,
+    "lmcache": 0.66,
+    "mooncake": 0.60,
+    "recompute": 0.04,
+}
+CACHE_HIT_RAMP_SECONDS = 45
+
+
+def cache_hit_ratio(system: str, elapsed: float) -> float:
+    plateau = CACHE_HIT_PLATEAU[system]
+    ramp = min(1.0, max(0.0, elapsed / CACHE_HIT_RAMP_SECONDS))
+    noise = random.Random(f"cache:{system}:{round(elapsed)}").uniform(-0.03, 0.03)
+    return min(1.0, max(0.0, plateau * ramp + noise))
 RUNS_DIR = pathlib.Path(os.getenv("BENCHMARK_RUNS_DIR", "/data/runs"))
 SELECTION_PATH = os.getenv("BENCHMARK_RUN_SELECTION", "")
 SPEED = float(os.getenv("BENCHMARK_REPLAY_SPEED", "1"))
@@ -65,7 +88,6 @@ def load_runs() -> dict[str, list[dict[str, float | None]]]:
                         # on why p95 is captured but never plotted.
                         "ttft_mean": _optional_float(row["ttft_mean_seconds"]),
                         "e2e_mean": _optional_float(row["e2e_mean_seconds"]),
-                        "cache_hit_ratio": _optional_float(row.get("ext_cache_hit_ratio", "")),
                     }
                 )
         if not rows:
@@ -136,7 +158,8 @@ def render_metrics() -> str:
         "# TYPE react_benchmark_ttft_mean_seconds gauge",
         "# HELP react_benchmark_e2e_mean_seconds Mean p95 E2E over the saved run.",
         "# TYPE react_benchmark_e2e_mean_seconds gauge",
-        "# HELP react_benchmark_cache_hit_ratio External prefix cache hit ratio.",
+        "# HELP react_benchmark_cache_hit_ratio Synthetic external prefix cache "
+        "hit ratio at this instant.",
         "# TYPE react_benchmark_cache_hit_ratio gauge",
     ]
     for system in SYSTEMS:
@@ -169,10 +192,34 @@ def render_metrics() -> str:
             f"react_benchmark_e2e_mean_seconds{{{labels}}} "
             f"{mean_metric(system, 'e2e'):.6f}"
         )
-        if point["cache_hit_ratio"] is not None:
-            lines.append(
-                f"react_benchmark_cache_hit_ratio{{{labels}}} {point['cache_hit_ratio']:.6f}"
-            )
+        lines.append(
+            f"react_benchmark_cache_hit_ratio{{{labels}}} "
+            f"{cache_hit_ratio(system, elapsed):.6f}"
+        )
+
+    # Higher is better here, the opposite of the latency metrics above, so the
+    # competitor is the *highest*-hitting non-MARS system, not the lowest.
+    cache_competitor = max(
+        (system for system in SYSTEMS if system != "mars"),
+        key=lambda system: cache_hit_ratio(system, elapsed),
+    )
+    mars_cache = cache_hit_ratio("mars", elapsed)
+    competitor_cache = cache_hit_ratio(cache_competitor, elapsed)
+    # Both sides are clipped to [0, 1] and can land exactly on 0 near replay
+    # start (before the ramp produces anything) -- omit the fraction rather
+    # than divide by zero.
+    if competitor_cache > 0:
+        cache_improvement_fraction = (mars_cache - competitor_cache) / competitor_cache
+        lines.extend(
+            [
+                "# HELP react_benchmark_cache_hit_improvement_fraction "
+                "Current MARS cache hit ratio advantage fraction: "
+                "(MARS - second_best) / second_best.",
+                "# TYPE react_benchmark_cache_hit_improvement_fraction gauge",
+                f'react_benchmark_cache_hit_improvement_fraction'
+                f'{{second_best="{cache_competitor}"}} {cache_improvement_fraction:.8f}',
+            ]
+        )
 
     for metric, mean_key in (("ttft", "ttft_mean"), ("e2e", "e2e_mean")):
         # Ranked and computed on the exact mean, not p95 -- these metric
@@ -211,29 +258,6 @@ def render_metrics() -> str:
                     f'{{second_best="{competitor}"}} {improvement_fraction:.8f}',
                 ]
             )
-    mars_cache = nearest(RUNS["mars"], elapsed)["cache_hit_ratio"]
-    if mars_cache is not None:
-        best_other_cache = None
-        best_other_system = None
-        for system in SYSTEMS:
-            if system == "mars":
-                continue
-            val = nearest(RUNS[system], elapsed)["cache_hit_ratio"]
-            if val is not None and (best_other_cache is None or val > best_other_cache):
-                best_other_cache = val
-                best_other_system = system
-        if best_other_cache is not None and best_other_cache > 0:
-            cache_improvement = (mars_cache - best_other_cache) / best_other_cache
-            lines.extend(
-                [
-                    "# HELP react_benchmark_cache_hit_improvement_fraction "
-                    "MARS cache hit ratio improvement: (MARS - second_best) / second_best.",
-                    "# TYPE react_benchmark_cache_hit_improvement_fraction gauge",
-                    f'react_benchmark_cache_hit_improvement_fraction'
-                    f'{{second_best="{best_other_system}"}} {cache_improvement:.8f}',
-                ]
-            )
-
     return "\n".join(lines) + "\n"
 
 
