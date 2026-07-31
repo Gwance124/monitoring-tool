@@ -115,12 +115,13 @@ a data point that was never measured.
 
 ## Grafana live dashboard
 
-The Grafana dashboards are self-contained presentation panels built with the
+The Grafana dashboard is a single, self-contained presentation built with two
 [HTML Graphics](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/)
-plugin. Each reads Prometheus data directly (no iframes) and renders bar
-charts, time-series plots, and improvement percentages in a single
-full-screen view. There are two slides, each its own dashboard (its own URL):
-the first covers TTFT/e2e latency, the second cache hit ratio.
+panels stacked in one dashboard -- one slide each. Each panel reads
+Prometheus data directly (no iframes) and renders bar charts, time-series
+plots, and improvement percentages full-width. Slide one (TTFT/e2e latency)
+sits at the top; slide two (cache hit ratio) is directly below it -- scroll
+(or press Page Down in kiosk mode) to move between them.
 
 ### File structure
 
@@ -133,39 +134,33 @@ the first covers TTFT/e2e latency, the second cache hit ratio.
         panel.html          # slide 2 markup (cache hit ratio)
         panel.css           # slide 2 styles
         panel.js            # slide 2 chart rendering
-      dashboard-template.json.tmpl         # slide 1 dashboard JSON, with placeholders
-      dashboard-template-cache.json.tmpl   # slide 2 dashboard JSON, with placeholders
-      build-dashboard.py                   # injects each hero panel's html/css/js
-      react-serving-benchmark.json         # slide 1 generated output (do not edit directly)
-      react-serving-benchmark-cache.json   # slide 2 generated output (do not edit directly)
+      dashboard-template.json.tmpl   # dashboard JSON with placeholders for both slides
+      build-dashboard.py             # injects both hero panels' html/css/js
+      react-serving-benchmark.json   # generated output (do not edit directly)
 
 ### Making changes
 
 Edit the files under `grafana/hero-panel/` (slide 1) or
-`grafana/hero-panel-cache/` (slide 2), then rebuild both:
+`grafana/hero-panel-cache/` (slide 2), then rebuild:
 
     python3 grafana/build-dashboard.py
 
-This writes both `grafana/react-serving-benchmark*.json` files. Grafana's file
+This writes `grafana/react-serving-benchmark.json`. Grafana's file
 provisioner picks up changes within its `updateIntervalSeconds` (default
 30s), or immediately on container restart.
 
-Use `--check` to verify the outputs are up to date without writing (useful in CI):
+Use `--check` to verify the output is up to date without writing (useful in CI):
 
     python3 grafana/build-dashboard.py --check
 
 ### Viewing the presentation
 
-Start the stack with `docker compose up`, then open the first slide in a browser:
+Start the stack with `docker compose up`, then open in a browser:
 
     http://localhost:3000/d/react-serving-benchmark/react-serving-benchmark-comparison?orgId=1&from=now-5m&to=now&timezone=browser&refresh=5s&_dash.hideTimePicker=true&kiosk=true
 
-The second slide (cache hit ratio) is the same dashboard with a different uid:
-
-    http://localhost:3000/d/react-serving-benchmark-cache/react-serving-benchmark-comparison-cache-hit-ratio?orgId=1&from=now-5m&to=now&timezone=browser&refresh=5s&_dash.hideTimePicker=true&kiosk=true
-
 Press **F11** (or your browser's fullscreen shortcut) for a clean, chrome-free
-presentation view. Both dashboards auto-refresh every 5 seconds.
+presentation view. The dashboard auto-refreshes every 5 seconds.
 
 ## Tests
 
