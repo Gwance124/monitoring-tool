@@ -15,13 +15,16 @@ const BAR_COLORS = {
 };
 
 const DISPLAY_NAMES = {
-  mars: "MARS",
+  mars: "Pooled Memory",
   lmcache: "LMCache",
   mooncake: "Mooncake",
   recompute: "Recomputation",
 };
 
-const ORDER = ["mars", "lmcache", "mooncake", "recompute"];
+// Recompute has no external cache at all -- a near-zero plateau that isn't
+// meaningful next to the others, so it's excluded from the cache-hit bars
+// and chart (unlike TTFT/e2e, where recompute is a real data point).
+const ORDER = ["mars", "lmcache", "mooncake"];
 
 function valuesToArray(values) {
   if (!values) {
@@ -242,7 +245,7 @@ function setImprovement(valueId, detailId, value, frames) {
 
   if (detailNode && secondBest) {
     detailNode.textContent =
-      `( MARS compared with ${DISPLAY_NAMES[secondBest] || secondBest} )`;
+      `${DISPLAY_NAMES.mars} vs ${DISPLAY_NAMES[secondBest] || secondBest}`;
   }
 }
 
@@ -536,7 +539,6 @@ function buildChart(svgId, legendId, series, yAxisTitle) {
   svg.appendChild(axisTitle);
 
   const drawingOrder = [
-    "recompute",
     "lmcache",
     "mooncake",
     "mars",

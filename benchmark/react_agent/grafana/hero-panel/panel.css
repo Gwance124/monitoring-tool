@@ -275,7 +275,7 @@ body {
 
 .lcd-row {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr) 74px;
+  grid-template-columns: 138px minmax(0, 1fr) 74px;
   align-items: center;
   gap: 11px;
   width: 100%;

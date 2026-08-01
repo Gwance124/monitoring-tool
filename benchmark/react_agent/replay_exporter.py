@@ -193,8 +193,10 @@ def render_metrics() -> str:
             f"{cache_hit_ratio(system, elapsed):.6f}"
         )
 
-    # Fixed comparison against recompute, same as second_best() above.
-    cache_competitor = "recompute"
+    # Cache hit ratio compares against mooncake, not recompute: recompute has
+    # no external cache at all (near-zero plateau), so comparing against it
+    # would blow up the fraction rather than say anything meaningful.
+    cache_competitor = "mooncake"
     mars_cache = cache_hit_ratio("mars", elapsed)
     competitor_cache = cache_hit_ratio(cache_competitor, elapsed)
     # Both sides are clipped to [0, 1] and can land exactly on 0 near replay

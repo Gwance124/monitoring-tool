@@ -15,13 +15,18 @@ const BAR_COLORS = {
 };
 
 const DISPLAY_NAMES = {
-  mars: "MARS",
+  mars: "Pooled Memory",
   lmcache: "LMCache",
   mooncake: "Mooncake",
   recompute: "Recomputation",
 };
 
 const ORDER = ["mars", "lmcache", "mooncake", "recompute"];
+
+// Cache hit ratio excludes recompute: it has no external cache at all (a
+// near-zero plateau), so it isn't meaningful next to the other three there
+// -- unlike TTFT, where recompute is a real data point and stays in ORDER.
+const CACHE_ORDER = ["mars", "lmcache", "mooncake"];
 
 function valuesToArray(values) {
   if (!values) {
@@ -177,10 +182,10 @@ function seriesMap(frames) {
   return result;
 }
 
-function latestBySystem(map) {
+function latestBySystem(map, order = ORDER) {
   const result = {};
 
-  ORDER.forEach((system) => {
+  order.forEach((system) => {
     const points = map[system] || [];
 
     if (points.length > 0) {
@@ -209,7 +214,11 @@ function latestFromFrames(frames) {
   return null;
 }
 
-function setImprovement(valueId, detailId, value, frames) {
+// This panel always compares Pooled Memory against a fixed competitor per
+// metric (see replay_exporter.py's second_best() and cache_competitor), so
+// the detail text is fixed rather than read from the second_best label like
+// the other slides do.
+function setImprovement(valueId, detailId, value, competitorLabel) {
   const valueNode = root.getElementById(valueId);
   const detailNode = root.getElementById(detailId);
 
@@ -224,17 +233,8 @@ function setImprovement(valueId, detailId, value, frames) {
 
   valueNode.textContent = (value * 100).toFixed(1);
 
-  const numericField = frames
-    .map((frame) => getField(frame, "number"))
-    .find(Boolean);
-
-  const secondBest =
-    numericField?.labels?.second_best ||
-    frames[0]?.labels?.second_best;
-
-  if (detailNode && secondBest) {
-    detailNode.textContent =
-      `( MARS compared with ${DISPLAY_NAMES[secondBest] || secondBest} )`;
+  if (detailNode) {
+    detailNode.textContent = `${DISPLAY_NAMES.mars} vs ${competitorLabel}`;
   }
 }
 
@@ -258,7 +258,7 @@ function formatPercent(value) {
   return (value * 100).toFixed(0);
 }
 
-function buildBars(containerId, currentValues, formatValue, unit) {
+function buildBars(containerId, currentValues, formatValue, unit, order = ORDER) {
   const container = root.getElementById(containerId);
 
   if (!container) {
@@ -277,7 +277,7 @@ function buildBars(containerId, currentValues, formatValue, unit) {
   const maximum = Math.max(...availableValues) * 1.08;
   const segmentCount = 30;
 
-  ORDER.forEach((system) => {
+  order.forEach((system) => {
     const value = currentValues[system];
 
     if (!Number.isFinite(value)) {
@@ -385,7 +385,7 @@ function niceTickStep(max) {
 // isRatio switches y-axis behavior between latency-style (seconds, "nice"
 // tick step search, unbounded) and ratio-style (0-1 clamp, fixed 20% step,
 // percent labels) -- this panel needs both in the same file.
-function buildChart(svgId, legendId, series, yAxisTitle, isRatio) {
+function buildChart(svgId, legendId, series, yAxisTitle, isRatio, order = ORDER) {
   const svg = root.getElementById(svgId);
   const legend = root.getElementById(legendId);
 
@@ -395,6 +395,16 @@ function buildChart(svgId, legendId, series, yAxisTitle, isRatio) {
 
   svg.replaceChildren();
   legend.replaceChildren();
+
+  // Drop any series not in `order` (e.g. recompute for the cache chart)
+  // before it can influence the y-axis scale or get drawn/legended.
+  const series_ = {};
+  order.forEach((system) => {
+    if (series[system]) {
+      series_[system] = series[system];
+    }
+  });
+  series = series_;
 
   const container = svg.parentElement;
   const rect = container ? container.getBoundingClientRect() : null;
@@ -457,7 +467,7 @@ function buildChart(svgId, legendId, series, yAxisTitle, isRatio) {
 
   const defs = svgElement("defs");
 
-  ORDER.forEach((system) => {
+  order.forEach((system) => {
     const gradient = svgElement("linearGradient", {
       id: `${svgId}-${system}-gradient`,
       x1: "0",
@@ -562,12 +572,8 @@ function buildChart(svgId, legendId, series, yAxisTitle, isRatio) {
   axisTitle.textContent = yAxisTitle;
   svg.appendChild(axisTitle);
 
-  const drawingOrder = [
-    "recompute",
-    "lmcache",
-    "mooncake",
-    "mars",
-  ];
+  // mars drawn last (on top); everything else keeps `order`'s relative order.
+  const drawingOrder = order.filter((system) => system !== "mars").concat("mars");
 
   drawingOrder.forEach((system) => {
     const points = series[system];
@@ -657,21 +663,27 @@ setImprovement(
   "ttft-improvement",
   "ttft-improvement-detail",
   ttftImprovement,
-  ttftImprovementFrames
+  DISPLAY_NAMES.recompute
 );
 
 setImprovement(
   "cache-improvement",
   "cache-improvement-detail",
   cacheImprovement,
-  cacheImprovementFrames
+  DISPLAY_NAMES.mooncake
 );
 
 const ttftSeries = seriesMap(framesForRef("C"));
 const cacheSeries = seriesMap(framesForRef("D"));
 
 buildBars("ttft-bars", latestBySystem(ttftSeries), formatSeconds, "s");
-buildBars("cache-bars", latestBySystem(cacheSeries), formatPercent, "%");
+buildBars(
+  "cache-bars",
+  latestBySystem(cacheSeries, CACHE_ORDER),
+  formatPercent,
+  "%",
+  CACHE_ORDER
+);
 
 buildChart(
   "ttft-chart",
@@ -686,7 +698,8 @@ buildChart(
   "cache-legend",
   cacheSeries,
   "External prefix cache hit ratio",
-  true
+  true,
+  CACHE_ORDER
 );
 
 const updated = root.getElementById("last-updated");

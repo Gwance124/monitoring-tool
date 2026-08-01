@@ -15,7 +15,7 @@ const BAR_COLORS = {
 };
 
 const DISPLAY_NAMES = {
-  mars: "MARS",
+  mars: "Pooled Memory",
   lmcache: "LMCache",
   mooncake: "Mooncake",
   recompute: "Recomputation",
@@ -246,7 +246,7 @@ function setImprovement(valueId, detailId, value, frames) {
 
   if (detailNode && secondBest) {
     detailNode.textContent =
-      `( MARS compared with ${DISPLAY_NAMES[secondBest] || secondBest} )`;
+      `${DISPLAY_NAMES.mars} vs ${DISPLAY_NAMES[secondBest] || secondBest}`;
   }
 }
 
