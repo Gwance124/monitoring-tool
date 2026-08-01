@@ -177,10 +177,10 @@ def test_improvement_is_computed_from_mean_not_p95(tmp_path: Path, monkeypatch: 
         line for line in output.splitlines()
         if line.startswith("react_benchmark_ttft_improvement_fraction{")
     )
-    assert 'second_best="lmcache"' in fraction_line
-    # (1.4 - 1.0) / 1.4 = 0.2857...
+    assert 'second_best="recompute"' in fraction_line
+    # (2.5 - 1.0) / 2.5 = 0.6
     value = float(fraction_line.rsplit(" ", 1)[-1])
-    assert value == pytest.approx((1.4 - 1.0) / 1.4, abs=1e-4)
+    assert value == pytest.approx((2.5 - 1.0) / 2.5, abs=1e-4)
 
 
 def test_improvement_fraction_omitted_when_either_side_is_a_gap(load_exporter):

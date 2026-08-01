@@ -118,14 +118,10 @@ def mean_metric(system: str, metric: str) -> float:
 
 
 def second_best(metric: str) -> tuple[str, float]:
-    # "Second best" is the best non-MARS competitor when MARS leads. If MARS
-    # does not lead, the negative percentage makes that regression explicit.
-    ranking = sorted(
-        (mean_metric(system, metric), system)
-        for system in SYSTEMS
-        if system != "mars"
-    )
-    return ranking[0][1], ranking[0][0]
+    # Fixed comparison against recompute rather than the best non-MARS
+    # competitor. The "second_best" label name is kept for API stability
+    # (panel.js and the Prometheus label both key off it).
+    return "recompute", mean_metric("recompute", metric)
 
 
 def render_metrics() -> str:
@@ -197,12 +193,8 @@ def render_metrics() -> str:
             f"{cache_hit_ratio(system, elapsed):.6f}"
         )
 
-    # Higher is better here, the opposite of the latency metrics above, so the
-    # competitor is the *highest*-hitting non-MARS system, not the lowest.
-    cache_competitor = max(
-        (system for system in SYSTEMS if system != "mars"),
-        key=lambda system: cache_hit_ratio(system, elapsed),
-    )
+    # Fixed comparison against recompute, same as second_best() above.
+    cache_competitor = "recompute"
     mars_cache = cache_hit_ratio("mars", elapsed)
     competitor_cache = cache_hit_ratio(cache_competitor, elapsed)
     # Both sides are clipped to [0, 1] and can land exactly on 0 near replay
