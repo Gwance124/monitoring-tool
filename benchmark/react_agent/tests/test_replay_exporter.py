@@ -12,9 +12,12 @@ COLUMNS = ["timestamp", "elapsed_seconds", "system", "ttft_mean_seconds",
 BASES = {"mars": 0.86, "lmcache": 1.13, "mooncake": 1.27, "recompute": 1.71}
 
 
+VARIANT = "cmm-hybrid"
+
+
 def _write_runs(runs_dir: Path, gap_system: str | None, gap_elapsed: int | None) -> None:
     for system, base in BASES.items():
-        directory = runs_dir / system
+        directory = runs_dir / VARIANT / system
         directory.mkdir(parents=True)
         with (directory / "run.csv").open("w", encoding="utf-8", newline="") as handle:
             writer = csv.DictWriter(handle, fieldnames=COLUMNS)
@@ -52,6 +55,7 @@ def load_exporter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("BENCHMARK_RUNS_DIR", str(tmp_path))
         monkeypatch.setenv("BENCHMARK_RUN_SELECTION", "")
         monkeypatch.setenv("BENCHMARK_REPLAY_LOOP", "false")
+        monkeypatch.setenv("BENCHMARK_VARIANTS", VARIANT)
         import replay_exporter
         importlib.reload(replay_exporter)
         return replay_exporter
@@ -132,7 +136,7 @@ def test_mean_metric_skips_gap_rows(load_exporter):
     exporter = load_exporter(gap_system="mars", gap_elapsed=5)
     # 9 real samples at 2.15s (0.86 * 2.5) plus one gap must average to 2.15,
     # not be pulled toward 0 by treating the gap as a zero.
-    assert exporter.mean_metric("mars", "ttft") == pytest.approx(0.86 * 2.5)
+    assert exporter.mean_metric(VARIANT, "mars", "ttft") == pytest.approx(0.86 * 2.5)
 
 
 def test_improvement_is_computed_from_mean_not_p95(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -142,7 +146,7 @@ def test_improvement_is_computed_from_mean_not_p95(tmp_path: Path, monkeypatch: 
     means = {"mars": 1.0, "lmcache": 1.4, "mooncake": 2.0, "recompute": 2.5}
     p95s = {"mars": 5.0, "lmcache": 5.05, "mooncake": 5.1, "recompute": 5.2}
     for system, mean in means.items():
-        directory = tmp_path / system
+        directory = tmp_path / VARIANT / system
         directory.mkdir(parents=True)
         with (directory / "run.csv").open("w", encoding="utf-8", newline="") as handle:
             writer = csv.DictWriter(handle, fieldnames=COLUMNS)
@@ -166,6 +170,7 @@ def test_improvement_is_computed_from_mean_not_p95(tmp_path: Path, monkeypatch: 
     monkeypatch.setenv("BENCHMARK_RUNS_DIR", str(tmp_path))
     monkeypatch.setenv("BENCHMARK_RUN_SELECTION", "")
     monkeypatch.setenv("BENCHMARK_REPLAY_LOOP", "false")
+    monkeypatch.setenv("BENCHMARK_VARIANTS", VARIANT)
     import replay_exporter
     importlib.reload(replay_exporter)
     replay_exporter.PAUSED = True

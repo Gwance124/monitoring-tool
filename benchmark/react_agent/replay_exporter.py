@@ -17,6 +17,16 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 SYSTEMS = ("mars", "lmcache", "mooncake", "recompute")
 
+# Each variant is a fully separate dataset (its own mars/lmcache/mooncake/
+# recompute CSVs under runs/<variant>/), replayed independently but exposed
+# from the same process. Every metric carries a variant="..." label so each
+# dashboard slide's Prometheus queries can filter to just its own data.
+VARIANTS = tuple(
+    v.strip()
+    for v in os.getenv("BENCHMARK_VARIANTS", "cmm-hybrid,pooled-memory").split(",")
+    if v.strip()
+)
+
 # External prefix cache hit ratio isn't in the extracted run CSVs for every
 # system yet -- recompute genuinely has no external cache, so extract_run.py
 # leaves it undefined there (see fixtures/generate.py) rather than reporting a
@@ -51,18 +61,19 @@ COLORS = {
 }
 
 
-def selected_paths() -> dict[str, pathlib.Path]:
+def selected_paths(variant: str) -> dict[str, pathlib.Path]:
     selection: dict[str, str] = {}
     if SELECTION_PATH:
         selection = json.loads(pathlib.Path(SELECTION_PATH).read_text())
     result = {}
+    variant_dir = RUNS_DIR / variant
     for system in SYSTEMS:
         if system in selection:
-            result[system] = RUNS_DIR / selection[system]
+            result[system] = variant_dir / selection[system]
             continue
-        candidates = sorted(glob.glob(str(RUNS_DIR / system / "*.csv")))
+        candidates = sorted(glob.glob(str(variant_dir / system / "*.csv")))
         if not candidates:
-            raise FileNotFoundError(f"No CSV runs found for {system}")
+            raise FileNotFoundError(f"No CSV runs found for {variant}/{system}")
         result[system] = pathlib.Path(candidates[-1])
     return result
 
@@ -72,9 +83,9 @@ def _optional_float(value: str) -> float | None:
     return None if value == "" else float(value)
 
 
-def load_runs() -> dict[str, list[dict[str, float | None]]]:
+def load_runs(variant: str) -> dict[str, list[dict[str, float | None]]]:
     runs = {}
-    for system, path in selected_paths().items():
+    for system, path in selected_paths(variant).items():
         rows = []
         with path.open(encoding="utf-8", newline="") as handle:
             for row in csv.DictReader(handle):
@@ -96,8 +107,11 @@ def load_runs() -> dict[str, list[dict[str, float | None]]]:
     return runs
 
 
-RUNS = load_runs()
-DURATION = min(rows[-1]["elapsed"] for rows in RUNS.values())
+RUNS = {variant: load_runs(variant) for variant in VARIANTS}
+DURATION = {
+    variant: min(rows[-1]["elapsed"] for rows in RUNS[variant].values())
+    for variant in VARIANTS
+}
 STARTED = time.monotonic()
 PAUSED = False
 PAUSED_ELAPSED = 0.0
@@ -109,37 +123,30 @@ def nearest(rows: list[dict[str, float]], elapsed: float) -> dict[str, float]:
     return rows[index]
 
 
-def mean_metric(system: str, metric: str) -> float:
+def mean_metric(variant: str, system: str, metric: str) -> float:
     values = [
-        row[metric] for row in RUNS[system]
+        row[metric] for row in RUNS[variant][system]
         if row[metric] is not None and math.isfinite(row[metric])
     ]
     return statistics.fmean(values)
 
 
-def second_best(metric: str) -> tuple[str, float]:
+def second_best(variant: str, metric: str) -> tuple[str, float]:
     # Fixed comparison against recompute rather than the best non-MARS
     # competitor. The "second_best" label name is kept for API stability
     # (panel.js and the Prometheus label both key off it).
-    return "recompute", mean_metric("recompute", metric)
+    return "recompute", mean_metric(variant, "recompute", metric)
 
 
 def render_metrics() -> str:
     raw_elapsed = (
         PAUSED_ELAPSED if PAUSED else (time.monotonic() - STARTED) * SPEED
     )
-    elapsed = (
-        raw_elapsed % max(DURATION, 1)
-        if LOOP
-        else min(raw_elapsed, DURATION)
-    )
     lines = [
         "# HELP react_benchmark_elapsed_seconds Normalized seconds since replay start.",
         "# TYPE react_benchmark_elapsed_seconds gauge",
-        f"react_benchmark_elapsed_seconds {elapsed:.6f}",
         "# HELP react_benchmark_run_duration_seconds Common replay duration.",
         "# TYPE react_benchmark_run_duration_seconds gauge",
-        f"react_benchmark_run_duration_seconds {DURATION:.6f}",
         "# HELP react_benchmark_ttft_p95_seconds Replayed p95 time to first token.",
         "# TYPE react_benchmark_ttft_p95_seconds gauge",
         "# HELP react_benchmark_e2e_p95_seconds Replayed p95 end-to-end latency.",
@@ -158,100 +165,119 @@ def render_metrics() -> str:
         "hit ratio at this instant.",
         "# TYPE react_benchmark_cache_hit_ratio gauge",
     ]
-    for system in SYSTEMS:
-        point = nearest(RUNS[system], elapsed)
-        labels = f'system="{system}",color="{COLORS[system]}"'
-        # A None here is a genuine scrape gap in the source run -- omit the
-        # sample for this instant rather than fabricate a value, exactly as
-        # the CSV itself never fills one in.
-        if point["ttft"] is not None:
-            lines.append(
-                f"react_benchmark_ttft_p95_seconds{{{labels}}} {point['ttft']:.6f}"
-            )
-        if point["e2e"] is not None:
-            lines.append(
-                f"react_benchmark_e2e_p95_seconds{{{labels}}} {point['e2e']:.6f}"
-            )
-        if point["ttft_mean"] is not None:
-            lines.append(
-                f"react_benchmark_ttft_current_mean_seconds{{{labels}}} {point['ttft_mean']:.6f}"
-            )
-        if point["e2e_mean"] is not None:
-            lines.append(
-                f"react_benchmark_e2e_current_mean_seconds{{{labels}}} {point['e2e_mean']:.6f}"
-            )
-        lines.append(
-            f"react_benchmark_ttft_mean_seconds{{{labels}}} "
-            f"{mean_metric(system, 'ttft'):.6f}"
+
+    for variant in VARIANTS:
+        duration = DURATION[variant]
+        elapsed = (
+            raw_elapsed % max(duration, 1)
+            if LOOP
+            else min(raw_elapsed, duration)
         )
         lines.append(
-            f"react_benchmark_e2e_mean_seconds{{{labels}}} "
-            f"{mean_metric(system, 'e2e'):.6f}"
+            f'react_benchmark_elapsed_seconds{{variant="{variant}"}} {elapsed:.6f}'
         )
         lines.append(
-            f"react_benchmark_cache_hit_ratio{{{labels}}} "
-            f"{cache_hit_ratio(system, elapsed):.6f}"
+            f'react_benchmark_run_duration_seconds{{variant="{variant}"}} {duration:.6f}'
         )
 
-    # Cache hit ratio compares against mooncake, not recompute: recompute has
-    # no external cache at all (near-zero plateau), so comparing against it
-    # would blow up the fraction rather than say anything meaningful.
-    cache_competitor = "mooncake"
-    mars_cache = cache_hit_ratio("mars", elapsed)
-    competitor_cache = cache_hit_ratio(cache_competitor, elapsed)
-    # Both sides are clipped to [0, 1] and can land exactly on 0 near replay
-    # start (before the ramp produces anything) -- omit the fraction rather
-    # than divide by zero.
-    if competitor_cache > 0:
-        cache_improvement_fraction = (mars_cache - competitor_cache) / competitor_cache
-        lines.extend(
-            [
-                "# HELP react_benchmark_cache_hit_improvement_fraction "
-                "Current MARS cache hit ratio advantage fraction: "
-                "(MARS - second_best) / second_best.",
-                "# TYPE react_benchmark_cache_hit_improvement_fraction gauge",
-                f'react_benchmark_cache_hit_improvement_fraction'
-                f'{{second_best="{cache_competitor}"}} {cache_improvement_fraction:.8f}',
-            ]
-        )
+        for system in SYSTEMS:
+            point = nearest(RUNS[variant][system], elapsed)
+            labels = f'variant="{variant}",system="{system}",color="{COLORS[system]}"'
+            # A None here is a genuine scrape gap in the source run -- omit the
+            # sample for this instant rather than fabricate a value, exactly as
+            # the CSV itself never fills one in.
+            if point["ttft"] is not None:
+                lines.append(
+                    f"react_benchmark_ttft_p95_seconds{{{labels}}} {point['ttft']:.6f}"
+                )
+            if point["e2e"] is not None:
+                lines.append(
+                    f"react_benchmark_e2e_p95_seconds{{{labels}}} {point['e2e']:.6f}"
+                )
+            if point["ttft_mean"] is not None:
+                lines.append(
+                    f"react_benchmark_ttft_current_mean_seconds{{{labels}}} {point['ttft_mean']:.6f}"
+                )
+            if point["e2e_mean"] is not None:
+                lines.append(
+                    f"react_benchmark_e2e_current_mean_seconds{{{labels}}} {point['e2e_mean']:.6f}"
+                )
+            lines.append(
+                f"react_benchmark_ttft_mean_seconds{{{labels}}} "
+                f"{mean_metric(variant, system, 'ttft'):.6f}"
+            )
+            lines.append(
+                f"react_benchmark_e2e_mean_seconds{{{labels}}} "
+                f"{mean_metric(variant, system, 'e2e'):.6f}"
+            )
+            lines.append(
+                f"react_benchmark_cache_hit_ratio{{{labels}}} "
+                f"{cache_hit_ratio(system, elapsed):.6f}"
+            )
 
-    for metric, mean_key in (("ttft", "ttft_mean"), ("e2e", "e2e_mean")):
-        # Ranked and computed on the exact mean, not p95 -- these metric
-        # names are unchanged for API stability, but the source column
-        # underneath now matches what react_benchmark_*_current_mean_seconds
-        # and the bar gauges display, so "MARS is N% better" agrees with the
-        # numbers actually on screen instead of a bucket-quantized p95.
-        competitor, value = second_best(mean_key)
-        mars_value = mean_metric("mars", mean_key)
-        improvement = 100.0 * (value - mars_value) / value
-        lines.extend(
-            [
-                f"# HELP react_benchmark_{metric}_improvement_percent "
-                f"MARS latency reduction versus the second-best system.",
-                f"# TYPE react_benchmark_{metric}_improvement_percent gauge",
-                f'react_benchmark_{metric}_improvement_percent'
-                f'{{second_best="{competitor}"}} {improvement:.6f}',
-            ]
-        )
-
-        mars_current = nearest(RUNS["mars"], elapsed)[mean_key]
-        competitor_current = nearest(RUNS[competitor], elapsed)[mean_key]
-        # Both sides of this instant's ratio can be a genuine scrape gap;
-        # omit the sample rather than fabricate a fraction from missing data.
-        if mars_current is not None and competitor_current is not None:
-            improvement_fraction = (
-                (competitor_current - mars_current) / competitor_current
+        # Cache hit ratio compares against mooncake, not recompute: recompute
+        # has no external cache at all (near-zero plateau), so comparing
+        # against it would blow up the fraction rather than say anything
+        # meaningful.
+        cache_competitor = "mooncake"
+        mars_cache = cache_hit_ratio("mars", elapsed)
+        competitor_cache = cache_hit_ratio(cache_competitor, elapsed)
+        # Both sides are clipped to [0, 1] and can land exactly on 0 near
+        # replay start (before the ramp produces anything) -- omit the
+        # fraction rather than divide by zero.
+        if competitor_cache > 0:
+            cache_improvement_fraction = (
+                (mars_cache - competitor_cache) / competitor_cache
             )
             lines.extend(
                 [
-                    f"# HELP react_benchmark_{metric}_improvement_fraction "
-                    f"Current MARS latency reduction fraction: "
-                    f"(second_best - MARS) / second_best.",
-                    f"# TYPE react_benchmark_{metric}_improvement_fraction gauge",
-                    f'react_benchmark_{metric}_improvement_fraction'
-                    f'{{second_best="{competitor}"}} {improvement_fraction:.8f}',
+                    "# HELP react_benchmark_cache_hit_improvement_fraction "
+                    "Current MARS cache hit ratio advantage fraction: "
+                    "(MARS - second_best) / second_best.",
+                    "# TYPE react_benchmark_cache_hit_improvement_fraction gauge",
+                    f'react_benchmark_cache_hit_improvement_fraction'
+                    f'{{variant="{variant}",second_best="{cache_competitor}"}} '
+                    f'{cache_improvement_fraction:.8f}',
                 ]
             )
+
+        for metric, mean_key in (("ttft", "ttft_mean"), ("e2e", "e2e_mean")):
+            # Ranked and computed on the exact mean, not p95 -- these metric
+            # names are unchanged for API stability, but the source column
+            # underneath now matches what react_benchmark_*_current_mean_seconds
+            # and the bar gauges display, so "MARS is N% better" agrees with
+            # the numbers actually on screen instead of a bucket-quantized p95.
+            competitor, value = second_best(variant, mean_key)
+            mars_value = mean_metric(variant, "mars", mean_key)
+            improvement = 100.0 * (value - mars_value) / value
+            lines.extend(
+                [
+                    f"# HELP react_benchmark_{metric}_improvement_percent "
+                    f"MARS latency reduction versus the second-best system.",
+                    f"# TYPE react_benchmark_{metric}_improvement_percent gauge",
+                    f'react_benchmark_{metric}_improvement_percent'
+                    f'{{variant="{variant}",second_best="{competitor}"}} {improvement:.6f}',
+                ]
+            )
+
+            mars_current = nearest(RUNS[variant]["mars"], elapsed)[mean_key]
+            competitor_current = nearest(RUNS[variant][competitor], elapsed)[mean_key]
+            # Both sides of this instant's ratio can be a genuine scrape gap;
+            # omit the sample rather than fabricate a fraction from missing data.
+            if mars_current is not None and competitor_current is not None:
+                improvement_fraction = (
+                    (competitor_current - mars_current) / competitor_current
+                )
+                lines.extend(
+                    [
+                        f"# HELP react_benchmark_{metric}_improvement_fraction "
+                        f"Current MARS latency reduction fraction: "
+                        f"(second_best - MARS) / second_best.",
+                        f"# TYPE react_benchmark_{metric}_improvement_fraction gauge",
+                        f'react_benchmark_{metric}_improvement_fraction'
+                        f'{{variant="{variant}",second_best="{competitor}"}} {improvement_fraction:.8f}',
+                    ]
+                )
     return "\n".join(lines) + "\n"
 
 
@@ -305,5 +331,8 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     mode = "looping" if LOOP else "hold at final value"
-    print(f"Replaying {', '.join(SYSTEMS)} on :{PORT} at {SPEED}x ({mode})")
+    print(
+        f"Replaying {', '.join(SYSTEMS)} across variants "
+        f"{', '.join(VARIANTS)} on :{PORT} at {SPEED}x ({mode})"
+    )
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
