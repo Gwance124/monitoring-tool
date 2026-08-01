@@ -109,12 +109,38 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
+          "expr": "react_benchmark_ttft_improvement_fraction",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{second_best}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_improvement_fraction",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{second_best}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
           "expr": "react_benchmark_ttft_current_mean_seconds",
           "instant": false,
           "interval": "1s",
           "legendFormat": "{{system}}",
           "range": true,
-          "refId": "A"
+          "refId": "C"
         },
         {
           "datasource": {
@@ -127,7 +153,7 @@
           "interval": "1s",
           "legendFormat": "{{system}}",
           "range": true,
-          "refId": "B"
+          "refId": "D"
         }
       ]
     },

@@ -191,6 +191,53 @@ function latestBySystem(map) {
   return result;
 }
 
+function latestFromFrames(frames) {
+  for (const frame of frames) {
+    const numberField = getField(frame, "number");
+
+    if (!numberField) {
+      continue;
+    }
+
+    const value = lastFinite(numberField.values);
+
+    if (value !== null) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function setImprovement(valueId, detailId, value, frames) {
+  const valueNode = root.getElementById(valueId);
+  const detailNode = root.getElementById(detailId);
+
+  if (!valueNode) {
+    return;
+  }
+
+  if (!Number.isFinite(value)) {
+    valueNode.textContent = "--";
+    return;
+  }
+
+  valueNode.textContent = (value * 100).toFixed(1);
+
+  const numericField = frames
+    .map((frame) => getField(frame, "number"))
+    .find(Boolean);
+
+  const secondBest =
+    numericField?.labels?.second_best ||
+    frames[0]?.labels?.second_best;
+
+  if (detailNode && secondBest) {
+    detailNode.textContent =
+      `( MARS compared with ${DISPLAY_NAMES[secondBest] || secondBest} )`;
+  }
+}
+
 function formatSeconds(value) {
   if (!Number.isFinite(value)) {
     return "--";
@@ -600,8 +647,28 @@ function buildChart(svgId, legendId, series, yAxisTitle, isRatio) {
   });
 }
 
-const ttftSeries = seriesMap(framesForRef("A"));
-const cacheSeries = seriesMap(framesForRef("B"));
+const ttftImprovementFrames = framesForRef("A");
+const cacheImprovementFrames = framesForRef("B");
+
+const ttftImprovement = latestFromFrames(ttftImprovementFrames);
+const cacheImprovement = latestFromFrames(cacheImprovementFrames);
+
+setImprovement(
+  "ttft-improvement",
+  "ttft-improvement-detail",
+  ttftImprovement,
+  ttftImprovementFrames
+);
+
+setImprovement(
+  "cache-improvement",
+  "cache-improvement-detail",
+  cacheImprovement,
+  cacheImprovementFrames
+);
+
+const ttftSeries = seriesMap(framesForRef("C"));
+const cacheSeries = seriesMap(framesForRef("D"));
 
 buildBars("ttft-bars", latestBySystem(ttftSeries), formatSeconds, "s");
 buildBars("cache-bars", latestBySystem(cacheSeries), formatPercent, "%");
