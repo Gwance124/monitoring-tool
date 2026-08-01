@@ -55,6 +55,114 @@
         "x": 0,
         "y": 0
       },
+      "id": 12,
+      "links": [],
+      "title": "",
+      "type": "gapit-htmlgraphics-panel",
+      "transparent": false,
+      "options": {
+        "SVGBaseFix": true,
+        "add100Percentage": true,
+        "calcsMutation": "standard",
+        "centerAlignContent": true,
+        "codeData": "{\"text\": \"Random text\"}",
+        "css": "__HERO_FMS_CSS__",
+        "dynamicData": false,
+        "dynamicFieldDisplayValues": false,
+        "dynamicHtmlGraphics": false,
+        "dynamicProps": false,
+        "html": "__HERO_FMS_HTML__",
+        "onInit": "",
+        "onInitOnResize": false,
+        "onRender": "__HERO_FMS_JS__",
+        "overflow": "visible",
+        "panelupdateOnMount": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull",
+            "last",
+            "firstNotNull",
+            "first",
+            "min",
+            "max",
+            "mean",
+            "sum",
+            "count",
+            "range",
+            "delta",
+            "step",
+            "diff",
+            "logmin",
+            "allIsZero",
+            "allIsNull",
+            "diffperc"
+          ]
+        },
+        "renderOnMount": true,
+        "rootCSS": "",
+        "useGrafanaScrollbar": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_ttft_current_mean_seconds",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "react_benchmark_cache_hit_ratio",
+          "instant": false,
+          "interval": "1s",
+          "legendFormat": "{{system}}",
+          "range": true,
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 25,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
       "id": 10,
       "links": [],
       "title": "",
@@ -213,7 +321,7 @@
         "h": 25,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 50
       },
       "id": 11,
       "links": [],

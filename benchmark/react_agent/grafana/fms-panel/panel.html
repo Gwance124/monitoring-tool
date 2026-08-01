@@ -27,16 +27,12 @@
         alt="System architecture"
       />
     </div>
-    <section class="summary-column">
-      <div class="summary-block">
-        <div class="summary-label">Cache hit ratio<br />advantage</div>
-        <div class="summary-value">
-          <span id="cache-improvement">--</span><span class="percent-symbol">%</span>
-        </div>
-        <div id="cache-improvement-detail" class="summary-detail">
-          MARS compared with second-best system
-        </div>
-      </div>
+
+    <section class="metric-column">
+      <h2>Current Mean TTFT</h2>
+      <div class="metric-subtitle">Lower is better</div>
+
+      <div id="ttft-bars" class="lcd-bar-group"></div>
     </section>
 
     <section class="metric-column">
@@ -46,13 +42,21 @@
       <div id="cache-bars" class="lcd-bar-group"></div>
     </section>
 
-    <!--
-      Only one metric-column/chart-section pair for now, so both fill the
-      whole row. Adding a second pair (same classes, same order as slide
-      one's TTFT/e2e split) auto-squishes both to half-width -- see the
-      panel.css comment above .metric-column, .chart-section.
-    -->
-    <section class="chart-section">
+    <section class="chart-section chart-left">
+      <h2>TTFT Mean</h2>
+      <div class="chart-shell">
+        <svg
+          id="ttft-chart"
+          class="live-chart"
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label="TTFT mean by serving system"
+        ></svg>
+      </div>
+      <div id="ttft-legend" class="chart-legend"></div>
+    </section>
+
+    <section class="chart-section chart-right">
       <h2>External Prefix Cache Hit Ratio</h2>
       <div class="chart-shell">
         <svg

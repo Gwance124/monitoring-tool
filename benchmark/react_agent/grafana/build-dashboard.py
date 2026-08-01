@@ -22,6 +22,9 @@ PLACEHOLDERS = {
     "__HERO_CACHE_HTML__": SCRIPT_DIR / "hero-panel-cache" / "panel.html",
     "__HERO_CACHE_CSS__": SCRIPT_DIR / "hero-panel-cache" / "panel.css",
     "__HERO_CACHE_JS__": SCRIPT_DIR / "hero-panel-cache" / "panel.js",
+    "__HERO_FMS_HTML__": SCRIPT_DIR / "fms-panel" / "panel.html",
+    "__HERO_FMS_CSS__": SCRIPT_DIR / "fms-panel" / "panel.css",
+    "__HERO_FMS_JS__": SCRIPT_DIR / "fms-panel" / "panel.js",
 }
 
 
