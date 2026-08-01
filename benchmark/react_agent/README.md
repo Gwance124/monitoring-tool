@@ -119,19 +119,21 @@ The Grafana dashboard is a single, self-contained presentation built with two
 [HTML Graphics](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/)
 panels stacked in one dashboard -- one slide each. Each panel reads
 Prometheus data directly (no iframes) and renders bar charts, time-series
-plots, and improvement percentages full-width. Slide one (TTFT/e2e latency)
-sits at the top; slide two (cache hit ratio) is directly below it -- scroll
-(or press Page Down in kiosk mode) to move between them.
+plots, and improvement percentages full-width. Slide one (Pooled Memory:
+TTFT mean + cache hit ratio) sits at the top; slide two (CMM-Hybrid: TTFT/e2e
+latency) is directly below it -- scroll (or press Page Down in kiosk mode)
+to move between them. Both slides benchmark the same underlying "mars"
+system under a different display name/comparison image per slide.
 
 ### File structure
 
     grafana/
-      hero-panel/
-        panel.html          # slide 1 markup
+      fms-panel/
+        panel.html          # slide 1 markup (Pooled Memory: TTFT + cache hit ratio)
         panel.css           # slide 1 styles
         panel.js            # slide 1 chart rendering (onRender callback)
-      hero-panel-cache/
-        panel.html          # slide 2 markup (cache hit ratio)
+      hero-panel/
+        panel.html          # slide 2 markup (CMM-Hybrid: TTFT + e2e latency)
         panel.css           # slide 2 styles
         panel.js            # slide 2 chart rendering
       dashboard-template.json.tmpl   # dashboard JSON with placeholders for both slides
@@ -140,8 +142,8 @@ sits at the top; slide two (cache hit ratio) is directly below it -- scroll
 
 ### Making changes
 
-Edit the files under `grafana/hero-panel/` (slide 1) or
-`grafana/hero-panel-cache/` (slide 2), then rebuild:
+Edit the files under `grafana/fms-panel/` (slide 1) or
+`grafana/hero-panel/` (slide 2), then rebuild:
 
     python3 grafana/build-dashboard.py
 

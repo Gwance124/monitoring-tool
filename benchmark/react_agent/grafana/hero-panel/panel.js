@@ -15,7 +15,7 @@ const BAR_COLORS = {
 };
 
 const DISPLAY_NAMES = {
-  mars: "Pooled Memory",
+  mars: "CMM-Hybrid",
   lmcache: "LMCache",
   mooncake: "Mooncake",
   recompute: "Recomputation",
