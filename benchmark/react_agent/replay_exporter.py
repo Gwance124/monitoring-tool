@@ -15,12 +15,20 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
-SYSTEMS = ("mars", "lmcache", "mooncake", "recompute")
-
-# Each variant is a fully separate dataset (its own mars/lmcache/mooncake/
-# recompute CSVs under runs/<variant>/), replayed independently but exposed
-# from the same process. Every metric carries a variant="..." label so each
+# Each variant is a fully separate dataset -- its own four system folders
+# under runs/<variant>/<system>/ -- replayed independently but exposed from
+# the same process. Every metric carries a variant="..." label so each
 # dashboard slide's Prometheus queries can filter to just its own data.
+# The four systems differ per variant (cmm-hybrid compares against Redis,
+# pooled-memory against Mooncake), so this is a straight lookup: no
+# relabeling, no shared "canonical" list -- whatever folder name is in a
+# variant's tuple is exactly what gets read from disk and exposed as the
+# Prometheus "system" label for that variant.
+VARIANT_SYSTEMS: dict[str, tuple[str, ...]] = {
+    "cmm-hybrid": ("mars", "lmcache", "recompute", "redis"),
+    "pooled-memory": ("mars", "lmcache", "recompute", "mooncake"),
+}
+
 VARIANTS = tuple(
     v.strip()
     for v in os.getenv("BENCHMARK_VARIANTS", "cmm-hybrid,pooled-memory").split(",")
@@ -30,14 +38,15 @@ VARIANTS = tuple(
 # External prefix cache hit ratio isn't in the extracted run CSVs for every
 # system yet -- recompute genuinely has no external cache, so extract_run.py
 # leaves it undefined there (see fixtures/generate.py) rather than reporting a
-# fabricated zero. The hero panel wants a plottable number for all four
-# systems, so this exporter synthesizes it directly: a per-system plateau
-# reached by a ramp from cold start, plus small jitter, reseeded each whole
-# second so repeated scrapes within the same second agree.
+# fabricated zero. The hero panel wants a plottable number for all systems,
+# so this exporter synthesizes it directly: a per-system plateau reached by a
+# ramp from cold start, plus small jitter, reseeded each whole second so
+# repeated scrapes within the same second agree.
 CACHE_HIT_PLATEAU = {
     "mars": 0.83,
     "lmcache": 0.66,
     "mooncake": 0.60,
+    "redis": 0.60,
     "recompute": 0.04,
 }
 CACHE_HIT_RAMP_SECONDS = 45
@@ -57,6 +66,7 @@ COLORS = {
     "mars": "dc2626",
     "lmcache": "2563eb",
     "mooncake": "7c3aed",
+    "redis": "7c3aed",
     "recompute": "64748b",
 }
 
@@ -67,7 +77,7 @@ def selected_paths(variant: str) -> dict[str, pathlib.Path]:
         selection = json.loads(pathlib.Path(SELECTION_PATH).read_text())
     result = {}
     variant_dir = RUNS_DIR / variant
-    for system in SYSTEMS:
+    for system in VARIANT_SYSTEMS[variant]:
         if system in selection:
             result[system] = variant_dir / selection[system]
             continue
@@ -180,7 +190,7 @@ def render_metrics() -> str:
             f'react_benchmark_run_duration_seconds{{variant="{variant}"}} {duration:.6f}'
         )
 
-        for system in SYSTEMS:
+        for system in VARIANT_SYSTEMS[variant]:
             point = nearest(RUNS[variant][system], elapsed)
             labels = f'variant="{variant}",system="{system}",color="{COLORS[system]}"'
             # A None here is a genuine scrape gap in the source run -- omit the
@@ -215,11 +225,11 @@ def render_metrics() -> str:
                 f"{cache_hit_ratio(system, elapsed):.6f}"
             )
 
-        # Cache hit ratio compares against mooncake, not recompute: recompute
-        # has no external cache at all (near-zero plateau), so comparing
-        # against it would blow up the fraction rather than say anything
-        # meaningful.
-        cache_competitor = "mooncake"
+        # Cache hit ratio compares against each variant's fourth system (the
+        # last entry in VARIANT_SYSTEMS), not recompute: recompute has no
+        # external cache at all (near-zero plateau), so comparing against it
+        # would blow up the fraction rather than say anything meaningful.
+        cache_competitor = VARIANT_SYSTEMS[variant][-1]
         mars_cache = cache_hit_ratio("mars", elapsed)
         competitor_cache = cache_hit_ratio(cache_competitor, elapsed)
         # Both sides are clipped to [0, 1] and can land exactly on 0 near
@@ -331,8 +341,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     mode = "looping" if LOOP else "hold at final value"
-    print(
-        f"Replaying {', '.join(SYSTEMS)} across variants "
-        f"{', '.join(VARIANTS)} on :{PORT} at {SPEED}x ({mode})"
-    )
+    for variant in VARIANTS:
+        print(f"Replaying {variant}: {', '.join(VARIANT_SYSTEMS[variant])}")
+    print(f"Serving on :{PORT} at {SPEED}x ({mode})")
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

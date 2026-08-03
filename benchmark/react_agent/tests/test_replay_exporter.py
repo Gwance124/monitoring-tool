@@ -9,7 +9,7 @@ COLUMNS = ["timestamp", "elapsed_seconds", "system", "ttft_mean_seconds",
            "requests_completed", "queue_p95_seconds", "prefill_p95_seconds",
            "ext_cache_hit_ratio", "prompt_tokens_recomputed"]
 
-BASES = {"mars": 0.86, "lmcache": 1.13, "mooncake": 1.27, "recompute": 1.71}
+BASES = {"mars": 0.86, "lmcache": 1.13, "redis": 1.27, "recompute": 1.71}
 
 
 VARIANT = "cmm-hybrid"
@@ -143,8 +143,8 @@ def test_improvement_is_computed_from_mean_not_p95(tmp_path: Path, monkeypatch: 
     # p95 is deliberately near-identical across systems here while the means
     # differ a lot -- if the exporter still sourced improvement from p95 (the
     # bug being fixed), this would report roughly 0%, not ~28.6%.
-    means = {"mars": 1.0, "lmcache": 1.4, "mooncake": 2.0, "recompute": 2.5}
-    p95s = {"mars": 5.0, "lmcache": 5.05, "mooncake": 5.1, "recompute": 5.2}
+    means = {"mars": 1.0, "lmcache": 1.4, "redis": 2.0, "recompute": 2.5}
+    p95s = {"mars": 5.0, "lmcache": 5.05, "redis": 5.1, "recompute": 5.2}
     for system, mean in means.items():
         directory = tmp_path / VARIANT / system
         directory.mkdir(parents=True)
